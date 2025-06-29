@@ -655,3 +655,65 @@ userApiClient.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
+
+// ==================== LESSON CHECKPOINT API ====================
+/**
+ * Lấy danh sách checkpoint của bài học
+ * @param {string|number} lessonId
+ * @returns {Promise} Danh sách checkpoint
+ */
+export const getLessonCheckpoints = async (lessonId) => {
+  try {
+    const response = await apiClient.get('/lesson-checkpoints', { params: { lesson_id: lessonId } });
+    return response.data.data || response.data;
+  } catch (error) {
+    console.error('Failed to fetch lesson checkpoints:', error);
+    throw new Error(error.response?.data?.error || `Failed to fetch lesson checkpoints: ${error.message}`);
+  }
+};
+
+/**
+ * Thêm checkpoint mới cho bài học
+ * @param {Object} data - { lesson_id, time_in_video, quiz_id }
+ * @returns {Promise} Checkpoint vừa tạo
+ */
+export const createLessonCheckpoint = async (data) => {
+  try {
+    const response = await apiClient.post('/lesson-checkpoints', data);
+    return response.data.data || response.data;
+  } catch (error) {
+    console.error('Failed to create lesson checkpoint:', error);
+    throw new Error(error.response?.data?.error || `Failed to create lesson checkpoint: ${error.message}`);
+  }
+};
+
+/**
+ * Cập nhật checkpoint
+ * @param {string|number} id - ID của checkpoint
+ * @param {Object} data - { time_in_video, quiz_id }
+ * @returns {Promise} Checkpoint đã cập nhật
+ */
+export const updateLessonCheckpoint = async (id, data) => {
+  try {
+    const response = await apiClient.put(`/lesson-checkpoints/${id}`, data);
+    return response.data.data || response.data;
+  } catch (error) {
+    console.error('Failed to update lesson checkpoint:', error);
+    throw new Error(error.response?.data?.error || `Failed to update lesson checkpoint: ${error.message}`);
+  }
+};
+
+/**
+ * Xóa checkpoint
+ * @param {string|number} id - ID của checkpoint
+ * @returns {Promise} 204 No Content
+ */
+export const deleteLessonCheckpoint = async (id) => {
+  try {
+    await apiClient.delete(`/lesson-checkpoints/${id}`);
+    return true;
+  } catch (error) {
+    console.error('Failed to delete lesson checkpoint:', error);
+    throw new Error(error.response?.data?.error || `Failed to delete lesson checkpoint: ${error.message}`);
+  }
+};

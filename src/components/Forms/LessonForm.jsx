@@ -9,10 +9,12 @@ import {
   Space, 
   Upload,
   message,
-  Tabs
+  Tabs,
+  Table,
+  Modal
 } from 'antd';
 import { UploadOutlined, PlayCircleOutlined, FileTextOutlined } from '@ant-design/icons';
-import { createLesson, updateLesson } from '../../services/api';
+import { createLesson, updateLesson, getLessonCheckpoints, createLessonCheckpoint, updateLessonCheckpoint, deleteLessonCheckpoint } from '../../services/api';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -23,6 +25,12 @@ const LessonForm = ({ courseId, sectionId, lesson, onSuccess, onCancel }) => {
   const [loading, setLoading] = useState(false);
   const [contentType, setContentType] = useState('video');
   const [fileList, setFileList] = useState([]);
+  const [checkpoints, setCheckpoints] = useState([]);
+  const [checkpointLoading, setCheckpointLoading] = useState(false);
+  const [editingCheckpoint, setEditingCheckpoint] = useState(null);
+  const [quizList, setQuizList] = useState([]);
+  const [showCheckpointModal, setShowCheckpointModal] = useState(false);
+  const [checkpointForm, setCheckpointForm] = useState({ quiz_id: '', time_in_video: '' });
 
   const isEditing = !!lesson;
 
@@ -52,6 +60,28 @@ const LessonForm = ({ courseId, sectionId, lesson, onSuccess, onCancel }) => {
       }
     }
   }, [lesson, form]);
+
+  // Lấy danh sách quiz của lesson (giả định lesson.quizzes hoặc cần fetch)
+  useEffect(() => {
+    if (lesson && lesson.quizzes) {
+      setQuizList(lesson.quizzes);
+    } else {
+      setQuizList([]); // Có thể fetch quiz nếu cần
+    }
+  }, [lesson]);
+
+  // Lấy checkpoint khi có lesson
+  useEffect(() => {
+    if (lesson && lesson.id) {
+      setCheckpointLoading(true);
+      getLessonCheckpoints(lesson.id)
+        .then(setCheckpoints)
+        .catch(() => setCheckpoints([]))
+        .finally(() => setCheckpointLoading(false));
+    } else {
+      setCheckpoints([]);
+    }
+  }, [lesson]);
 
   const handleSubmit = async (values) => {
     // Đảm bảo duration luôn là số >= 0
@@ -226,6 +256,72 @@ const LessonForm = ({ courseId, sectionId, lesson, onSuccess, onCancel }) => {
     }
   };
 
+  // Xử lý thêm/sửa checkpoint
+  const handleSaveCheckpoint = async () => {
+    if (!checkpointForm.quiz_id || !checkpointForm.time_in_video) {
+      message.error('Vui lòng chọn quiz và nhập thời gian!');
+      return;
+    }
+    try {
+      setCheckpointLoading(true);
+      if (editingCheckpoint) {
+        await updateLessonCheckpoint(editingCheckpoint.id, {
+          quiz_id: checkpointForm.quiz_id,
+          time_in_video: checkpointForm.time_in_video
+        });
+        message.success('Cập nhật checkpoint thành công');
+      } else {
+        await createLessonCheckpoint({
+          lesson_id: lesson.id,
+          quiz_id: checkpointForm.quiz_id,
+          time_in_video: checkpointForm.time_in_video
+        });
+        message.success('Thêm checkpoint thành công');
+      }
+      // Reload
+      const data = await getLessonCheckpoints(lesson.id);
+      setCheckpoints(data);
+      setShowCheckpointModal(false);
+      setEditingCheckpoint(null);
+      setCheckpointForm({ quiz_id: '', time_in_video: '' });
+    } catch (e) {
+      message.error('Lưu checkpoint thất bại');
+    } finally {
+      setCheckpointLoading(false);
+    }
+  };
+
+  // Xử lý xóa checkpoint
+  const handleDeleteCheckpoint = async (id) => {
+    Modal.confirm({
+      title: 'Xác nhận xóa',
+      content: 'Bạn có chắc chắn muốn xóa checkpoint này?',
+      okText: 'Xóa',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        setCheckpointLoading(true);
+        try {
+          await deleteLessonCheckpoint(id);
+          const data = await getLessonCheckpoints(lesson.id);
+          setCheckpoints(data);
+          message.success('Đã xóa checkpoint');
+        } catch {
+          message.error('Xóa checkpoint thất bại');
+        } finally {
+          setCheckpointLoading(false);
+        }
+      }
+    });
+  };
+
+  // Mở modal thêm/sửa checkpoint
+  const openCheckpointModal = (cp = null) => {
+    setEditingCheckpoint(cp);
+    setCheckpointForm(cp ? { quiz_id: cp.quiz_id, time_in_video: cp.time_in_video } : { quiz_id: '', time_in_video: '' });
+    setShowCheckpointModal(true);
+  };
+
   return (
     <Form
       form={form}
@@ -333,6 +429,72 @@ const LessonForm = ({ courseId, sectionId, lesson, onSuccess, onCancel }) => {
             />
           </Form.Item>
         </TabPane>
+
+        {contentType === 'video' && (
+          <TabPane tab="Quiz trong video" key="checkpoints">
+            <Button type="primary" onClick={() => openCheckpointModal()} style={{ marginBottom: 16 }}>
+              Thêm checkpoint
+            </Button>
+            <Table
+              dataSource={checkpoints}
+              loading={checkpointLoading}
+              rowKey="id"
+              pagination={false}
+              columns={[
+                {
+                  title: 'Quiz',
+                  dataIndex: 'quiz_id',
+                  render: (id) => quizList.find(q => q.id === id)?.title || id
+                },
+                {
+                  title: 'Thời gian xuất hiện (giây)',
+                  dataIndex: 'time_in_video',
+                },
+                {
+                  title: 'Hành động',
+                  render: (_, record) => (
+                    <Space>
+                      <Button size="small" onClick={() => openCheckpointModal(record)}>Sửa</Button>
+                      <Button size="small" danger onClick={() => handleDeleteCheckpoint(record.id)}>Xóa</Button>
+                    </Space>
+                  )
+                }
+              ]}
+            />
+            <Modal
+              open={showCheckpointModal}
+              title={editingCheckpoint ? 'Sửa checkpoint' : 'Thêm checkpoint'}
+              onCancel={() => setShowCheckpointModal(false)}
+              onOk={handleSaveCheckpoint}
+              okText="Lưu"
+              confirmLoading={checkpointLoading}
+            >
+              <div style={{ marginBottom: 16 }}>
+                <span>Quiz: </span>
+                <Select
+                  style={{ width: '100%' }}
+                  value={checkpointForm.quiz_id}
+                  onChange={v => setCheckpointForm(f => ({ ...f, quiz_id: v }))}
+                  placeholder="Chọn quiz"
+                >
+                  {quizList.map(q => (
+                    <Option key={q.id} value={q.id}>{q.title}</Option>
+                  ))}
+                </Select>
+              </div>
+              <div>
+                <span>Thời gian xuất hiện (giây): </span>
+                <InputNumber
+                  style={{ width: '100%' }}
+                  min={0}
+                  value={checkpointForm.time_in_video}
+                  onChange={v => setCheckpointForm(f => ({ ...f, time_in_video: v }))}
+                  placeholder="Ví dụ: 120"
+                />
+              </div>
+            </Modal>
+          </TabPane>
+        )}
       </Tabs>
 
       <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
