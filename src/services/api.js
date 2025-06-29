@@ -164,6 +164,7 @@ export const deleteCourse = async (id) => {
  * @returns {Promise} API response với data và total
  */
 export const getSections = async (courseId, params = {}) => {
+  console.log('DEBUG: getSections called', { courseId, params }); // Debug log
   try {
     const { _page = 1, _limit = 10, ...otherParams } = params;
     const response = await apiClient.get('/sections', {
@@ -186,6 +187,7 @@ export const getSections = async (courseId, params = {}) => {
  * @returns {Promise} Section data
  */
 export const getSection = async (sectionId) => {
+  console.log('DEBUG: getSection called', { sectionId }); // Debug log
   try {
     const response = await apiClient.get(`/sections/${sectionId}`);
     return response.data.data || response.data;
@@ -205,6 +207,7 @@ export const getSection = async (sectionId) => {
  * @returns {Promise} Section mới được tạo
  */
 export const createSection = async (courseId, data) => {
+  console.log('DEBUG: createSection called', { courseId, data }); // Debug log
   try {
     const response = await apiClient.post(`/courses/${courseId}/sections`, data);
     return response.data.data || response.data;
@@ -221,6 +224,7 @@ export const createSection = async (courseId, data) => {
  * @returns {Promise} Section đã cập nhật
  */
 export const updateSection = async (sectionId, data) => {
+  console.log('DEBUG: updateSection called', { sectionId, data }); // Debug log
   try {
     const response = await apiClient.put(`/sections/${sectionId}`, data);
     return response.data.data || response.data;
@@ -236,6 +240,7 @@ export const updateSection = async (sectionId, data) => {
  * @returns {Promise} API response
  */
 export const deleteSection = async (sectionId) => {
+  console.log('DEBUG: deleteSection called', { sectionId }); // Debug log
   try {
     const response = await apiClient.delete(`/sections/${sectionId}`);
     return response.data;
@@ -254,6 +259,7 @@ export const deleteSection = async (sectionId) => {
  * @returns {Promise} API response với data và total
  */
 export const getLessons = async (sectionId, params = {}) => {
+  console.log('DEBUG: getLessons called', { sectionId, params }); // Debug log
   try {
     const { _page = 1, _limit = 10, ...otherParams } = params;
     const response = await apiClient.get('/lessons', {
@@ -276,6 +282,7 @@ export const getLessons = async (sectionId, params = {}) => {
  * @returns {Promise} Lesson data
  */
 export const getLesson = async (lessonId) => {
+  console.log('DEBUG: getLesson called', { lessonId }); // Debug log
   try {
     const response = await apiClient.get(`/lessons/${lessonId}`);
     return response.data.data || response.data;
@@ -301,6 +308,7 @@ export const getLesson = async (lessonId) => {
  * @returns {Promise} Lesson mới được tạo
  */
 export const createLesson = async (sectionId, data, isFormData = false) => {
+  console.log('DEBUG: createLesson called', { sectionId, data, isFormData }); // Debug log
   try {
     const config = isFormData
       ? { headers: { 'Content-Type': 'multipart/form-data' } }
@@ -320,6 +328,7 @@ export const createLesson = async (sectionId, data, isFormData = false) => {
  * @returns {Promise} Lesson đã cập nhật
  */
 export const updateLesson = async (lessonId, data, isFormData = false) => {
+  console.log('DEBUG: updateLesson called', { lessonId, data, isFormData }); // Debug log
   try {
     const config = isFormData
       ? { headers: { 'Content-Type': 'multipart/form-data' } }
@@ -338,6 +347,7 @@ export const updateLesson = async (lessonId, data, isFormData = false) => {
  * @returns {Promise} API response
  */
 export const deleteLesson = async (lessonId) => {
+  console.log('DEBUG: deleteLesson called', { lessonId }); // Debug log
   try {
     const response = await apiClient.delete(`/lessons/${lessonId}`);
     return response.data;
@@ -356,6 +366,7 @@ export const deleteLesson = async (lessonId) => {
  * @returns {Promise} API response với data và total
  */
 export const getQuizzes = async (lessonId, params = {}) => {
+  console.log('DEBUG: getQuizzes called', { lessonId, params }); // Debug log
   try {
     const { _page = 1, _limit = 10, ...otherParams } = params;
     const response = await apiClient.get('/quizzes', {
@@ -378,6 +389,7 @@ export const getQuizzes = async (lessonId, params = {}) => {
  * @returns {Promise} Quiz data
  */
 export const getQuiz = async (quizId) => {
+  console.log('DEBUG: getQuiz called', { quizId }); // Debug log
   try {
     const response = await apiClient.get(`/quizzes/${quizId}`);
     return response.data.data || response.data;
@@ -396,6 +408,7 @@ export const getQuiz = async (quizId) => {
  * @returns {Promise} Quiz mới được tạo
  */
 export const createQuiz = async (lessonId, data) => {
+  console.log('DEBUG: createQuiz called', { lessonId, data }); // Debug log
   try {
     const response = await apiClient.post(`/lessons/${lessonId}/quizzes`, data);
     return response.data.data || response.data;
@@ -412,6 +425,7 @@ export const createQuiz = async (lessonId, data) => {
  * @returns {Promise} Quiz đã cập nhật
  */
 export const updateQuiz = async (quizId, data) => {
+  console.log('DEBUG: updateQuiz called', { quizId, data }); // Debug log
   try {
     const response = await apiClient.put(`/quizzes/${quizId}`, data);
     return response.data.data || response.data;
@@ -427,6 +441,7 @@ export const updateQuiz = async (quizId, data) => {
  * @returns {Promise} API response
  */
 export const deleteQuiz = async (quizId) => {
+  console.log('DEBUG: deleteQuiz called', { quizId }); // Debug log
   try {
     const response = await apiClient.delete(`/quizzes/${quizId}`);
     return response.data;
@@ -443,6 +458,7 @@ export const deleteQuiz = async (quizId) => {
  * @returns {Promise} API response với data và total
  */
 export const getQuestions = async (quizId, params = {}) => {
+  console.log('DEBUG: getQuestions called', { quizId, params }); // Debug log
   try {
     const { _page = 1, _limit = 10, ...otherParams } = params;
     const response = await apiClient.get('/questions', {
@@ -465,6 +481,7 @@ export const getQuestions = async (quizId, params = {}) => {
  * @returns {Promise} Question data
  */
 export const getQuestion = async (questionId) => {
+  console.log('DEBUG: getQuestion called', { questionId }); // Debug log
   try {
     const response = await apiClient.get(`/questions/${questionId}`);
     return response.data.data || response.data;
@@ -486,6 +503,7 @@ export const getQuestion = async (questionId) => {
  * @returns {Promise} Question mới được tạo
  */
 export const createQuestion = async (quizId, data) => {
+  console.log('DEBUG: createQuestion called', { quizId, data }); // Debug log
   try {
     const response = await apiClient.post(`/quizzes/${quizId}/questions`, data);
     return response.data.data || response.data;
@@ -502,6 +520,7 @@ export const createQuestion = async (quizId, data) => {
  * @returns {Promise} Question đã cập nhật
  */
 export const updateQuestion = async (questionId, data) => {
+  console.log('DEBUG: updateQuestion called', { questionId, data }); // Debug log
   try {
     const response = await apiClient.put(`/questions/${questionId}`, data);
     return response.data.data || response.data;
@@ -517,6 +536,7 @@ export const updateQuestion = async (questionId, data) => {
  * @returns {Promise} API response
  */
 export const deleteQuestion = async (questionId) => {
+  console.log('DEBUG: deleteQuestion called', { questionId }); // Debug log
   try {
     const response = await apiClient.delete(`/questions/${questionId}`);
     return response.data;

@@ -92,6 +92,7 @@ const CourseTreeView = ({
 
   // Handle delete
   const handleDelete = async (node) => {
+    console.log('DEBUG: handleDelete called for node:', node); // Debug log
     const { type, data } = node;
     
     Modal.confirm({
@@ -106,6 +107,7 @@ const CourseTreeView = ({
       okType: 'danger',
       cancelText: 'Hủy',
       onOk: async () => {
+        console.log('DEBUG: onOk confirmed for node:', node); // Debug log
         try {
           switch (type) {
             case 'section':
