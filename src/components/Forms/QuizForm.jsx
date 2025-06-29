@@ -13,7 +13,7 @@ import {
   Col
 } from 'antd';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
-import { createQuiz, updateQuiz } from '../../services/api';
+import { createQuiz, updateQuiz, getQuestions, updateQuestion, deleteQuestion } from '../../services/api';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -31,7 +31,19 @@ const QuizForm = ({ lessonId, quiz, onSuccess, onCancel }) => {
         title: quiz.title,
         description: quiz.description
       });
-      setQuestions(quiz.questions || []);
+      // Fetch questions for the quiz from API
+      const fetchQuestions = async () => {
+        try {
+          console.debug('Fetching questions for quiz', quiz.id);
+          const res = await getQuestions(quiz.id, { _limit: 100 });
+          setQuestions(res.data || []);
+          console.debug('Fetched questions:', res.data);
+        } catch (err) {
+          console.error('Error fetching questions:', err);
+          setQuestions([]);
+        }
+      };
+      fetchQuestions();
     } else {
       // Initialize with one empty question
       setQuestions([{
@@ -45,8 +57,8 @@ const QuizForm = ({ lessonId, quiz, onSuccess, onCancel }) => {
   }, [quiz, form]);
 
   const handleSubmit = async (values) => {
-    // Validate questions
-    if (questions.length === 0) {
+    // Cho phép cập nhật quiz không cần câu hỏi khi chỉnh sửa
+    if (!isEditing && questions.length === 0) {
       message.error('Vui lòng thêm ít nhất một câu hỏi');
       return;
     }
@@ -57,8 +69,7 @@ const QuizForm = ({ lessonId, quiz, onSuccess, onCancel }) => {
       q.correct_option < 0 ||
       q.correct_option >= q.options.length
     );
-
-    if (invalidQuestions.length > 0) {
+    if (!isEditing && invalidQuestions.length > 0) {
       message.error('Vui lòng điền đầy đủ thông tin cho tất cả câu hỏi');
       return;
     }
@@ -74,7 +85,7 @@ const QuizForm = ({ lessonId, quiz, onSuccess, onCancel }) => {
         }))
       };
 
-      console.log('QUIZ DATA TO SAVE:', quizData);
+      console.debug('QUIZ DATA TO SAVE:', quizData);
       if (isEditing) {
         await updateQuiz(quiz.id, quizData);
         message.success('Cập nhật quiz thành công');
@@ -122,6 +133,26 @@ const QuizForm = ({ lessonId, quiz, onSuccess, onCancel }) => {
     setQuestions(newQuestions);
   };
 
+  // Xóa câu hỏi qua API hoặc local nếu chưa có id
+  const handleDeleteQuestion = async (questionIndex) => {
+    const question = questions[questionIndex];
+    if (!question.id) {
+      // Nếu là câu hỏi mới chưa lưu, chỉ xóa local
+      removeQuestion(questionIndex);
+      return;
+    }
+    setLoading(true);
+    try {
+      await deleteQuestion(question.id);
+      removeQuestion(questionIndex);
+      message.success('Đã xóa câu hỏi');
+    } catch (error) {
+      message.error('Không thể xóa câu hỏi: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Form
       form={form}
@@ -160,20 +191,19 @@ const QuizForm = ({ lessonId, quiz, onSuccess, onCancel }) => {
         <Card
           key={questionIndex}
           title={`Câu hỏi ${questionIndex + 1}`}
-          extra={
-            questions.length > 1 && (
-              <Button
-                type="text"
-                danger
-                icon={<DeleteOutlined />}
-                onClick={() => removeQuestion(questionIndex)}
-              >
-                Xóa
-              </Button>
-            )
-          }
           style={{ marginBottom: 16 }}
         >
+          <Button
+            type="text"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={() => handleDeleteQuestion(questionIndex)}
+            loading={loading}
+            style={{ float: 'right', marginBottom: 8 }}
+          >
+            Xóa câu hỏi
+          </Button>
+
           <Form.Item
             label="Nội dung câu hỏi"
             required
