@@ -21,3 +21,5 @@ export const uploadFile = async (file) => {
   // Đảm bảo response trả về có url
   return response.data.url || response.data.data?.url;
 };
+
+export default uploadFile;

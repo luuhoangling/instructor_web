@@ -332,17 +332,6 @@ const LessonForm = ({ courseId, sectionId, lesson, onSuccess, onCancel }) => {
               unCheckedChildren="Trả phí"
             />
           </Form.Item>
-
-          <Form.Item
-            name="can_preview"
-            label="Cho phép xem trước"
-            valuePropName="checked"
-          >
-            <Switch 
-              checkedChildren="Có" 
-              unCheckedChildren="Không"
-            />
-          </Form.Item>
         </TabPane>
       </Tabs>
 

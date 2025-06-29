@@ -60,7 +60,7 @@ const getFormFields = (nodeType) => {
     course: {
       ...baseFields,
       price: { 
-        label: 'Giá (VND)', 
+        label: 'Giá (USD)', 
         component: InputNumber,
         props: { min: 0, formatter: value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') }
       },

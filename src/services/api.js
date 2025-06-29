@@ -549,6 +549,42 @@ export const deleteQuestion = async (questionId) => {
   }
 };
 
+// ==================== USER API ====================
+
+/**
+ * Lấy thông tin chi tiết user theo userId
+ * @param {string|number} userId
+ * @returns {Promise} User data
+ */
+export const getUserInfo = async (userId) => {
+  try {
+    const response = await userApiClient.get(`/${userId}/get-user-info`);
+    return response.data.data || response.data;
+  } catch (error) {
+    console.error(`Failed to fetch user info for ${userId}:`, error);
+    throw new Error(error.response?.data?.error || `Failed to fetch user info: ${error.message}`);
+  }
+};
+
+/**
+ * Cập nhật thông tin user
+ * @param {string|number} userId
+ * @param {Object} data - username, oldPassword, password, bio, sex, avatar_url
+ * @returns {Promise} User data đã cập nhật
+ */
+export const updateUserInfo = async (userId, data, isFormData = false) => {
+  try {
+    const config = isFormData
+      ? { headers: { 'Content-Type': 'multipart/form-data' } }
+      : undefined;
+    const response = await userApiClient.put(`/update/${userId}`, data, config);
+    return response.data.data || response.data;
+  } catch (error) {
+    console.error(`Failed to update user info for ${userId}:`, error);
+    throw new Error(error.response?.data?.error || `Failed to update user info: ${error.message}`);
+  }
+};
+
 // ==================== UTILITY FUNCTIONS ====================
 
 /**
@@ -598,3 +634,24 @@ export const buildCourseTree = (courseData) => {
 };
 
 export default apiClient;
+
+// Tạo axios instance riêng cho user
+const userApiBase = import.meta.env.VITE_USER_API_URL || '/api';
+const userApiClient = axios.create({
+  baseURL: `${userApiBase}`,
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+userApiClient.interceptors.request.use(
+  (config) => {
+    const token = getToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);

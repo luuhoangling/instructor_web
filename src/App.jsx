@@ -14,6 +14,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import NotificationManager from './components/NotificationManager';
 import ErrorBoundary from './components/ErrorBoundary';
 import './App.css';
+import ProfilePage from './pages/ProfilePage';
 
 // Ant Design theme configuration
 const theme = {
@@ -108,6 +109,15 @@ function App() {
                   <ProtectedRoute>
                     <MainLayout>
                       <EditCourse />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } />
+                
+                {/* Profile route */}
+                <Route path="/profile" element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <ProfilePage />
                     </MainLayout>
                   </ProtectedRoute>
                 } />

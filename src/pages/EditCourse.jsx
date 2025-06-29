@@ -145,23 +145,6 @@ const EditCourse = () => {
     }
   };
 
-  // Quick actions
-  const handlePreviewCourse = () => {
-    // TODO: Open course preview in new tab
-    addNotification({
-      type: 'info',
-      message: 'Chức năng xem trước đang được phát triển'
-    });
-  };
-
-  const handlePublishCourse = () => {
-    // TODO: Toggle course publish status
-    addNotification({
-      type: 'info',
-      message: 'Chức năng xuất bản đang được phát triển'
-    });
-  };
-
   // Loading state
   if (loadingStates.course) {
     return (
@@ -226,7 +209,9 @@ const EditCourse = () => {
           >
             Quay lại
           </Button>
-          
+          <Button type="primary" onClick={handleAddSection}>
+            Tạo chương mới
+          </Button>
           <div>
             <h2 style={{ margin: 0 }}>
               {currentCourse.title}
@@ -240,17 +225,12 @@ const EditCourse = () => {
         </HeaderLeft>
 
         <HeaderRight>
-          <Button onClick={handlePreviewCourse}>
-            Xem trước
-          </Button>
-          
           <Button 
             type={currentCourse.is_published ? 'default' : 'primary'}
             onClick={handlePublishCourse}
           >
             {currentCourse.is_published ? 'Hủy xuất bản' : 'Xuất bản'}
           </Button>
-          
           <Button 
             type="primary"
             icon={<SaveOutlined />}

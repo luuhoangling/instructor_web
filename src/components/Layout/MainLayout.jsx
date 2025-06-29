@@ -1,8 +1,8 @@
 import React from 'react';
 import { Layout as AntLayout, Menu, Button, Breadcrumb, notification, Dropdown, Avatar, Space, Typography } from 'antd';
-import { 
-  DashboardOutlined, 
-  BookOutlined, 
+import {
+  DashboardOutlined,
+  BookOutlined,
   PlusOutlined,
   UndoOutlined,
   RedoOutlined,
@@ -32,6 +32,7 @@ const StyledHeader = styled(Header)`
   justify-content: space-between;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   z-index: 1;
+  min-height: 64px;
 `;
 
 const StyledSider = styled(Sider)`
@@ -55,7 +56,7 @@ const Logo = styled.div`
 const HeaderActions = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 `;
 
 const UndoRedoGroup = styled.div`
@@ -67,14 +68,33 @@ const UserInfo = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
-  border-radius: 8px;
+  padding: 4px 12px 4px 8px;
+  border-radius: 20px;
   background: #f5f5f5;
   cursor: pointer;
-  transition: all 0.2s ease;
-  
+  transition: background 0.2s;
+  min-width: 0;
+  max-width: 220px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  height: 36px;
+  box-sizing: border-box;
+
   &:hover {
     background: #e6f7ff;
+  }
+
+  .ant-avatar {
+    flex-shrink: 0;
+  }
+
+  .ant-typography {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+    max-width: 120px;
   }
 `;
 
@@ -82,10 +102,10 @@ const MainLayout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const currentUser = getCurrentUser();
-  
+
   // Zustand store
   const { undo, redo, canUndo, canRedo } = useCourseStore();
-  
+
   // Menu items
   const menuItems = [
     {
@@ -105,11 +125,6 @@ const MainLayout = ({ children }) => {
         },
       ],
     },
-    {
-      key: '/settings',
-      icon: <SettingOutlined />,
-      label: 'Cài đặt',
-    },
   ];
 
   // User menu items
@@ -118,11 +133,6 @@ const MainLayout = ({ children }) => {
       key: 'profile',
       icon: <ProfileOutlined />,
       label: 'Thông tin cá nhân',
-    },
-    {
-      key: 'settings',
-      icon: <SettingOutlined />,
-      label: 'Cài đặt',
     },
     {
       type: 'divider',
@@ -138,14 +148,14 @@ const MainLayout = ({ children }) => {
   // Get current selected menu key from pathname
   const getSelectedKey = () => {
     const { pathname } = location;
-    
+
     // Exact matches
     if (pathname === '/') return ['/'];
     if (pathname === '/courses/new') return ['/courses/new'];
     if (pathname.startsWith('/courses/') && pathname.includes('/edit')) {
       return ['/courses'];
     }
-    
+
     // Default fallback
     return [pathname];
   };
@@ -154,16 +164,16 @@ const MainLayout = ({ children }) => {
   const getBreadcrumbItems = () => {
     const { pathname } = location;
     const segments = pathname.split('/').filter(Boolean);
-    
+
     const items = [{ title: 'Trang chủ' }];
-    
+
     if (segments.length === 0) {
       return items;
     }
-    
+
     if (segments[0] === 'courses') {
       items.push({ title: 'Khóa học' });
-      
+
       if (segments[1] === 'new') {
         items.push({ title: 'Tạo mới' });
       } else if (segments[1] && segments[2] === 'edit') {
@@ -171,7 +181,7 @@ const MainLayout = ({ children }) => {
         items.push({ title: 'Chỉnh sửa' });
       }
     }
-    
+
     return items;
   };
 
@@ -223,11 +233,7 @@ const MainLayout = ({ children }) => {
         logout();
         break;
       case 'profile':
-        // TODO: Navigate to profile page
-        notification.info({
-          message: 'Tính năng đang phát triển',
-          description: 'Trang thông tin cá nhân sẽ sớm được ra mắt',
-        });
+        navigate('/profile');
         break;
       case 'settings':
         navigate('/settings');
@@ -242,7 +248,7 @@ const MainLayout = ({ children }) => {
       {/* Sidebar */}
       <StyledSider width={250} collapsible>
         <div style={{ padding: '16px', borderBottom: '1px solid #f0f0f0' }}>
-          <Logo>Course Manager</Logo>
+          <Logo>KMB Web</Logo>
         </div>
         <Menu
           mode="inline"
@@ -259,7 +265,7 @@ const MainLayout = ({ children }) => {
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <Breadcrumb items={getBreadcrumbItems()} />
           </div>
-          
+
           <HeaderActions>
             {/* Undo/Redo buttons - chỉ hiển thị khi có tree data */}
             {location.pathname.includes('/edit') && (
@@ -302,8 +308,8 @@ const MainLayout = ({ children }) => {
               trigger={['click']}
             >
               <UserInfo>
-                <Avatar 
-                  src={currentUser?.avatar_url} 
+                <Avatar
+                  src={currentUser?.avatar_url}
                   icon={<UserOutlined />}
                   size="small"
                 />

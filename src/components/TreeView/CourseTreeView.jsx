@@ -46,13 +46,13 @@ const CourseTreeView = ({
     return [{
       title: course.title,
       key: `course-${course.id}`,
-      icon: <BookOutlined />,
+      // icon: <BookOutlined />, // Loại bỏ icon
       type: 'course',
       data: course,
       children: (course.sections || []).map(section => ({
         title: section.title,
         key: `section-${section.id}`,
-        icon: <AppstoreOutlined />,
+        // icon: <AppstoreOutlined />, // Loại bỏ icon
         type: 'section',
         data: section,
         children: [
@@ -60,13 +60,13 @@ const CourseTreeView = ({
           ...(section.lessons || []).map(lesson => ({
             title: lesson.title,
             key: `lesson-${lesson.id}`,
-            icon: lesson.content_type === 'video' ? <PlayCircleOutlined /> : <FileTextOutlined />,
+            // icon: lesson.content_type === 'video' ? <PlayCircleOutlined /> : <FileTextOutlined />, // Loại bỏ icon
             type: 'lesson',
             data: lesson,
             children: (lesson.quizzes || []).map(quiz => ({
               title: quiz.title,
               key: `quiz-${quiz.id}`,
-              icon: <QuestionCircleOutlined />,
+              // icon: <QuestionCircleOutlined />, // Loại bỏ icon
               type: 'quiz',
               data: quiz,
               isLeaf: true
@@ -191,13 +191,26 @@ const CourseTreeView = ({
         window.open(node.data.content_url, '_blank');
       }
     };
+    // Xác định style phân cấp
+    let level = 0;
+    if (node.type === 'section') level = 1;
+    if (node.type === 'lesson') level = 2;
+    if (node.type === 'quiz') level = 3;
+    const bgColors = ['#fff', '#f9fafb', '#f3f6fa', '#eef3f7'];
+    const borderColors = ['#d9d9d9', '#b3b3b3', '#8c8c8c', '#595959'];
     return (
       <div
-        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', cursor: node.type === 'lesson' ? 'pointer' : 'default' }}
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', cursor: node.type === 'lesson' ? 'pointer' : 'default',
+          paddingLeft: 8 + level * 16,
+          borderLeft: `3px solid ${borderColors[level]}`,
+          background: bgColors[level],
+          minHeight: 36
+        }}
         onClick={node.type === 'lesson' ? handleLessonClick : undefined}
       >
         <Space size={4}>
-          {node.icon}
+          {/* {node.icon} */}
           <Text>{node.title}</Text>
           {node.type === 'lesson' && node.data?.is_free && (
             <Text type="secondary" style={{ fontSize: '12px' }}>(Miễn phí)</Text>
@@ -208,7 +221,6 @@ const CourseTreeView = ({
             </Text>
           )}
         </Space>
-        
         <Dropdown 
           menu={getDropdownMenu(node)} 
           trigger={['click']}
@@ -237,7 +249,7 @@ const CourseTreeView = ({
   return (
     <div style={{ height: '600px', overflow: 'auto' }}>
       <Tree
-        showIcon
+        // showIcon // Loại bỏ icon
         onSelect={handleSelect}
         onExpand={handleExpand}
         expandedKeys={expandedKeys}
@@ -256,7 +268,7 @@ const CourseTreeView = ({
           borderRadius: '6px',
           margin: '16px 0'
         }}>
-          <AppstoreOutlined style={{ fontSize: '24px', color: '#d9d9d9', marginBottom: '8px' }} />
+          {/* <AppstoreOutlined style={{ fontSize: '24px', color: '#d9d9d9', marginBottom: '8px' }} /> */}
           <div style={{ color: '#999', marginBottom: '8px' }}>
             Chưa có chương nào
           </div>

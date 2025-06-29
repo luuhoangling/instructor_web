@@ -327,11 +327,11 @@ const CreateCourse = () => {
             <Col xs={24} md={12}>
               <Form.Item
                 name="price"
-                label="Giá khóa học (VND)"
+                label="Giá khóa học (USD)"
                 rules={validationRules.price}
               >
                 <InputNumber
-                  placeholder="299000"
+                  placeholder="299"
                   formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                   parser={value => value.replace(/\$\s?|(,*)/g, '')}
                   style={{ width: '100%' }}
@@ -343,11 +343,11 @@ const CreateCourse = () => {
             <Col xs={24} md={12}>
               <Form.Item
                 name="discount_price"
-                label="Giá khuyến mãi (VND)"
+                label="Giá khuyến mãi (USD)"
                 rules={validationRules.discount_price}
               >
                 <InputNumber
-                  placeholder="199000"
+                  placeholder="199"
                   formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                   parser={value => value.replace(/\$\s?|(,*)/g, '')}
                   style={{ width: '100%' }}
@@ -456,10 +456,10 @@ const CreateCourse = () => {
                 <div>
                   <strong>Giá:</strong> {
                     (formData.price || form.getFieldValue('price'))?.toLocaleString() || '0'
-                  } VND
+                  } USD
                   {(formData.discount_price || form.getFieldValue('discount_price')) && (
                     <span style={{ color: '#f50', marginLeft: 8 }}>
-                      → {(formData.discount_price || form.getFieldValue('discount_price')).toLocaleString()} VND
+                      → {(formData.discount_price || form.getFieldValue('discount_price')).toLocaleString()} USD
                     </span>
                   )}
                 </div>

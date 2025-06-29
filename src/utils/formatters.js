@@ -2,12 +2,11 @@
  * Formatting utilities for display data
  */
 
-// Format currency (VND)
+// Format currency (USD)
 export const formatCurrency = (amount, showUnit = true) => {
   if (amount === null || amount === undefined) return '0';
-  
-  const formatted = new Intl.NumberFormat('vi-VN').format(amount);
-  return showUnit ? `${formatted} VND` : formatted;
+  const formatted = new Intl.NumberFormat('en-US').format(amount);
+  return showUnit ? `${formatted} USD` : formatted;
 };
 
 // Format file size

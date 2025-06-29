@@ -209,15 +209,19 @@ const CourseDetail = () => {
           </Col>
           <Col>
             <Space>
-              <Button icon={<EyeOutlined />}>
-                Xem trước
-              </Button>
               <Button 
                 type="primary" 
                 icon={<EditOutlined />}
                 onClick={() => navigate(`/courses/${id}/edit`)}
               >
                 Chỉnh sửa
+              </Button>
+              <Button 
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => handleAddNew('section')}
+              >
+                Thêm chương mới
               </Button>
             </Space>
           </Col>
@@ -263,9 +267,6 @@ const CourseDetail = () => {
               <Descriptions.Item label="Ngày tạo">
                 {formatDate(course.created_at)}
               </Descriptions.Item>
-              <Descriptions.Item label="Cập nhật lần cuối">
-                {formatDate(course.updated_at)}
-              </Descriptions.Item>
             </Descriptions>
 
             {course.description && (
@@ -295,51 +296,6 @@ const CourseDetail = () => {
                 </div>
               </>
             )}
-          </Card>
-
-          {/* Quick Actions */}
-          <Card title="Thao tác nhanh">
-            <Space direction="vertical" style={{ width: '100%' }}>
-              <Button 
-                type="primary" 
-                icon={<PlusOutlined />}
-                block
-                onClick={() => handleAddNew('section')}
-              >
-                Thêm chương mới
-              </Button>
-              
-              {selectedNode?.type === 'section' && (
-                <>
-                  <Button 
-                    icon={<FileTextOutlined />}
-                    block
-                    onClick={() => handleAddNew('lesson', selectedNode)}
-                  >
-                    Thêm bài học vào "{selectedNode.title}"
-                  </Button>
-                </>
-              )}
-              
-              {selectedNode?.type === 'lesson' && (
-                <Button 
-                  icon={<QuestionCircleOutlined />}
-                  block
-                  onClick={() => handleAddNew('quiz', selectedNode)}
-                >
-                  Thêm quiz vào "{selectedNode.title}"
-                </Button>
-              )}
-
-              <Divider />
-              
-              <Button 
-                icon={<SettingOutlined />}
-                onClick={() => navigate(`/courses/${id}/settings`)}
-              >
-                Cài đặt khóa học
-              </Button>
-            </Space>
           </Card>
         </Col>
 
