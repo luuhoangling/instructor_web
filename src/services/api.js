@@ -300,9 +300,12 @@ export const getLesson = async (lessonId) => {
  * @param {number} data.order_index - Thứ tự lesson
  * @returns {Promise} Lesson mới được tạo
  */
-export const createLesson = async (sectionId, data) => {
+export const createLesson = async (sectionId, data, isFormData = false) => {
   try {
-    const response = await apiClient.post(`/sections/${sectionId}/lessons`, data);
+    const config = isFormData
+      ? { headers: { 'Content-Type': 'multipart/form-data' } }
+      : undefined;
+    const response = await apiClient.post(`/sections/${sectionId}/lessons`, data, config);
     return response.data.data || response.data;
   } catch (error) {
     console.error('Failed to create lesson:', error);
@@ -316,9 +319,12 @@ export const createLesson = async (sectionId, data) => {
  * @param {Object} data - Dữ liệu cập nhật
  * @returns {Promise} Lesson đã cập nhật
  */
-export const updateLesson = async (lessonId, data) => {
+export const updateLesson = async (lessonId, data, isFormData = false) => {
   try {
-    const response = await apiClient.put(`/lessons/${lessonId}`, data);
+    const config = isFormData
+      ? { headers: { 'Content-Type': 'multipart/form-data' } }
+      : undefined;
+    const response = await apiClient.put(`/lessons/${lessonId}`, data, config);
     return response.data.data || response.data;
   } catch (error) {
     console.error(`Failed to update lesson ${lessonId}:`, error);

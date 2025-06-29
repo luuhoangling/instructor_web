@@ -39,14 +39,16 @@ const LessonForm = ({ courseId, sectionId, lesson, onSuccess, onCancel }) => {
         order_index: lesson.order_index
       });
       setContentType(lesson.content_type);
-      
-      if (lesson.content_url) {
+      // Chỉ set fileList nếu có content_url thực tế (không phải blob:)
+      if (lesson.content_url && !lesson.content_url.startsWith('blob:')) {
         setFileList([{
           uid: '-1',
           name: lesson.content_type === 'video' ? 'video.mp4' : 'file.pdf',
           status: 'done',
           url: lesson.content_url,
         }]);
+      } else {
+        setFileList([]);
       }
     }
   }, [lesson, form]);
@@ -54,19 +56,54 @@ const LessonForm = ({ courseId, sectionId, lesson, onSuccess, onCancel }) => {
   const handleSubmit = async (values) => {
     setLoading(true);
     try {
-      const lessonData = {
-        ...values,
-        content_url: fileList[0]?.url || fileList[0]?.response?.url,
-        section_id: sectionId,
-        course_id: courseId
-      };
-
-      if (isEditing) {
-        await updateLesson(lesson.id, lessonData);
-        message.success('Cập nhật bài học thành công');
+      let response;
+      if (contentType === 'video' && fileList.length > 0) {
+        const fileObj = fileList[0].originFileObj || fileList[0];
+        console.log('[DEBUG] fileList:', fileList);
+        console.log('[DEBUG] fileObj:', fileObj);
+        if (!(fileObj instanceof File)) {
+          message.error('File video không hợp lệ!');
+          setLoading(false);
+          return;
+        }
+        const formData = new FormData();
+        formData.append('title', values.title);
+        formData.append('description', values.description || '');
+        formData.append('content_type', values.content_type);
+        formData.append('order_index', values.order_index);
+        formData.append('duration', values.duration || 0);
+        formData.append('is_free', values.is_free);
+        formData.append('can_preview', values.can_preview);
+        formData.append('section_id', sectionId);
+        formData.append('course_id', courseId);
+        formData.append('video', fileObj);
+        // Debug log FormData
+        for (let pair of formData.entries()) {
+          console.log(`[DEBUG] FormData: ${pair[0]} =`, pair[1]);
+        }
+        if (isEditing) {
+          response = await updateLesson(lesson.id, formData, true);
+          message.success('Cập nhật bài học thành công');
+        } else {
+          response = await createLesson(sectionId, formData, true);
+          message.success('Tạo bài học thành công');
+        }
+        console.log('[DEBUG] Server response:', response);
       } else {
-        await createLesson(sectionId, lessonData);
-        message.success('Tạo bài học thành công');
+        const lessonData = {
+          ...values,
+          content_url: fileList[0]?.url || fileList[0]?.response?.url,
+          section_id: sectionId,
+          course_id: courseId
+        };
+        console.log('[DEBUG] lessonData (no video):', lessonData);
+        if (isEditing) {
+          await updateLesson(lesson.id, lessonData);
+          message.success('Cập nhật bài học thành công');
+        } else {
+          await createLesson(sectionId, lessonData);
+          message.success('Tạo bài học thành công');
+        }
       }
       onSuccess();
     } catch (error) {
@@ -78,6 +115,7 @@ const LessonForm = ({ courseId, sectionId, lesson, onSuccess, onCancel }) => {
   };
 
   const handleFileChange = (info) => {
+    console.log('[DEBUG] handleFileChange info:', info);
     setFileList(info.fileList);
     if (info.file.status === 'done') {
       message.success(`${info.file.name} tải lên thành công`);
@@ -86,6 +124,7 @@ const LessonForm = ({ courseId, sectionId, lesson, onSuccess, onCancel }) => {
     }
   };
 
+  // Bỏ customRequest, chỉ chọn file, không upload lên server ngay
   const uploadProps = {
     beforeUpload: (file) => {
       const maxSize = contentType === 'video' ? 500 * 1024 * 1024 : 50 * 1024 * 1024;
@@ -95,13 +134,22 @@ const LessonForm = ({ courseId, sectionId, lesson, onSuccess, onCancel }) => {
       }
       return true;
     },
-    customRequest: ({ file, onSuccess, onError }) => {
-      // Mock upload - replace with actual upload logic
+    onRemove: (file) => {
+      setFileList([]);
+    },
+    onChange: (info) => {
+      // Chỉ giữ file cuối cùng
+      setFileList(info.fileList.slice(-1));
+    },
+    fileList: fileList,
+    maxCount: 1,
+    accept: contentType === 'video' ? 'video/*' : '.pdf,.doc,.docx,.ppt,.pptx',
+    showUploadList: true,
+    customRequest: ({ onSuccess }) => {
+      // Không upload ngay, chỉ giả lập thành công để hiển thị file
       setTimeout(() => {
-        onSuccess({
-          url: URL.createObjectURL(file)
-        });
-      }, 1000);
+        onSuccess('ok');
+      }, 0);
     }
   };
 
