@@ -65,6 +65,11 @@ const CourseDetail = () => {
   // Handle node selection in tree
   const handleNodeSelect = (selectedKeys, { node }) => {
     setSelectedNode(node);
+    // Nếu là bài học và có content_url thì mở video
+    const videoUrl = node.data?.content_url;
+    if (node.type === 'lesson' && videoUrl) {
+      window.open(videoUrl, '_blank');
+    }
   };
 
   // Handle add new item
@@ -149,6 +154,18 @@ const CourseDetail = () => {
         return null;
     }
   };
+
+  useEffect(() => {
+    // Gán callback để TreeView có thể gọi reload dữ liệu khi xóa
+    window.refreshCourseData = () => {
+      if (typeof loadCourseData === 'function') {
+        loadCourseData();
+      }
+    };
+    return () => {
+      window.refreshCourseData = undefined;
+    };
+  }, [course]);
 
   if (loading) {
     return (

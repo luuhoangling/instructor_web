@@ -121,8 +121,10 @@ const CourseTreeView = ({
               break;
           }
           message.success('Xóa thành công');
-          // Trigger parent refresh
-          window.location.reload();
+          // Gọi callback nếu có, hạn chế reload toàn trang
+          if (typeof window.refreshCourseData === 'function') {
+            window.refreshCourseData();
+          }
         } catch (error) {
           console.error('Delete failed:', error);
           message.error('Không thể xóa: ' + error.message);
@@ -182,13 +184,18 @@ const CourseTreeView = ({
 
   // Custom title renderer with actions
   const titleRender = (node) => {
+    // Nếu là bài học thì thêm sự kiện click để luôn mở content_url
+    const handleLessonClick = (e) => {
+      e.stopPropagation();
+      if (node.type === 'lesson' && node.data?.content_url) {
+        window.open(node.data.content_url, '_blank');
+      }
+    };
     return (
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'space-between',
-        width: '100%'
-      }}>
+      <div
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', cursor: node.type === 'lesson' ? 'pointer' : 'default' }}
+        onClick={node.type === 'lesson' ? handleLessonClick : undefined}
+      >
         <Space size={4}>
           {node.icon}
           <Text>{node.title}</Text>
