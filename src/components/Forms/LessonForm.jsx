@@ -33,7 +33,7 @@ const LessonForm = ({ courseId, sectionId, lesson, onSuccess, onCancel }) => {
         description: lesson.description,
         content_type: lesson.content_type,
         content_text: lesson.content_text,
-        duration: lesson.duration,
+        duration: lesson.duration !== undefined && lesson.duration !== null ? Number(lesson.duration) : 0,
         is_free: lesson.is_free,
         can_preview: lesson.can_preview,
         order_index: lesson.order_index
@@ -54,6 +54,10 @@ const LessonForm = ({ courseId, sectionId, lesson, onSuccess, onCancel }) => {
   }, [lesson, form]);
 
   const handleSubmit = async (values) => {
+    // Đảm bảo duration luôn là số >= 0
+    if (contentType === 'video') {
+      values.duration = values.duration !== undefined && values.duration !== null ? Number(values.duration) : 0;
+    }
     setLoading(true);
     try {
       let response;
@@ -303,15 +307,11 @@ const LessonForm = ({ courseId, sectionId, lesson, onSuccess, onCancel }) => {
             <Form.Item
               name="duration"
               label="Thời lượng (giây)"
-              rules={[
-                { required: true, message: 'Vui lòng nhập thời lượng' },
-                { type: 'number', min: 0, message: 'Thời lượng phải lớn hơn hoặc bằng 0' }
-              ]}
+              rules={[]}
             >
-              <InputNumber 
-                style={{ width: '100%' }}
+              <Input
+                style={{ width: '100%', border: '1px solid #d9d9d9', borderRadius: 4 }}
                 placeholder="0"
-                min={0}
               />
             </Form.Item>
           )}
