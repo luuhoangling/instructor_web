@@ -4,7 +4,8 @@ import uploadFile from '../../services/upload';
 
 const UserProfileForm = ({ userId }) => {
   const [form, setForm] = useState({
-    username: '',
+    username: '', // Tên hiển thị
+    username_acc: '', // Tên tài khoản đăng nhập
     bio: '',
     sex: '',
     avatar_url: '',
@@ -21,7 +22,14 @@ const UserProfileForm = ({ userId }) => {
       setLoading(true);
       try {
         const data = await getUserInfo(userId);
-        setForm(f => ({ ...f, ...data }));
+        setForm(f => ({
+          ...f,
+          ...data,
+          password: '',
+          oldPassword: '',
+          username: data.username || '',
+          username_acc: data.username_acc || '',
+        }));
       } catch (e) {
         setError('Không thể tải thông tin người dùng.');
       } finally {
@@ -50,11 +58,13 @@ const UserProfileForm = ({ userId }) => {
     try {
       const updateData = {};
       if (form.username) updateData.username = form.username;
+      // Không gửi username_acc khi cập nhật, chỉ dùng để hiển thị
       if (form.bio) updateData.bio = form.bio;
       if (form.sex) updateData.sex = form.sex;
       if (avatarFile) {
         const formData = new FormData();
         if (form.username) formData.append('username', form.username);
+        // Không gửi username_acc khi cập nhật, chỉ dùng để hiển thị
         if (form.bio) formData.append('bio', form.bio);
         if (form.sex) formData.append('sex', form.sex);
         formData.append('avatar_url', avatarFile);
@@ -91,10 +101,36 @@ const UserProfileForm = ({ userId }) => {
       boxShadow: '0 2px 12px #0001',
     }}>
       <h2 style={{ textAlign: 'center', marginBottom: 24 }}>Thông tin cá nhân</h2>
-      {error && <div style={{ color: 'red', marginBottom: 12 }}>{error}</div>}
-      {success && <div style={{ color: 'green', marginBottom: 12 }}>{success}</div>}
+      {error && (
+        <div style={{
+          color: '#fff',
+          background: '#ff4d4f',
+          borderRadius: 6,
+          padding: '10px 16px',
+          marginBottom: 12,
+          fontWeight: 500,
+          boxShadow: '0 2px 8px #ff4d4f22',
+          textAlign: 'center',
+        }}>{error}</div>
+      )}
+      {success && (
+        <div style={{
+          color: '#fff',
+          background: '#52c41a',
+          borderRadius: 6,
+          padding: '10px 16px',
+          marginBottom: 12,
+          fontWeight: 500,
+          boxShadow: '0 2px 8px #52c41a22',
+          textAlign: 'center',
+        }}>{success}</div>
+      )}
       <div style={{ marginBottom: 16 }}>
-        <label style={{ fontWeight: 500 }}>Tên người dùng:</label>
+        <label style={{ fontWeight: 500 }}>Tên tài khoản:</label>
+        <input name="username_acc" value={form.username_acc} disabled style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #ccc', background: '#f0f0f0' }} />
+      </div>
+      <div style={{ marginBottom: 16 }}>
+        <label style={{ fontWeight: 500 }}>Tên:</label>
         <input name="username" value={form.username} onChange={handleChange} required style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #ccc' }} />
       </div>
       <div style={{ marginBottom: 16 }}>
