@@ -130,9 +130,12 @@ export const createCourse = async (data) => {
  * @param {Object} data - Dữ liệu cập nhật (các trường tương tự createCourse)
  * @returns {Promise} API response
  */
-export const updateCourse = async (id, data) => {
+export const updateCourse = async (id, data, isFormData = false) => {
   try {
-    const response = await apiClient.put(`/courses/${id}`, data);
+    const config = isFormData
+      ? { headers: { 'Content-Type': 'multipart/form-data' } }
+      : undefined;
+    const response = await apiClient.put(`/courses/${id}`, data, config);
     return response.data.data || response.data;
   } catch (error) {
     console.error(`Failed to update course ${id}:`, error);

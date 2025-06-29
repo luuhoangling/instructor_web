@@ -26,6 +26,7 @@ import {
 } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { createCourse, updateCourse, getCourse } from '../../services/api';
+import { uploadFile } from '../../services/upload';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -98,18 +99,36 @@ const CourseForm = () => {
   const handleSubmit = async (values) => {
     setLoading(true);
     try {
-      const courseData = {
-        ...values,
-        thumbnail_url: thumbnailList[0]?.url || thumbnailList[0]?.response?.url,
-        preview_video_url: videoList[0]?.url || videoList[0]?.response?.url
-      };
-
+      let isFormData = false;
+      let data = { ...values };
+      // Chuẩn bị file cho FormData nếu có file mới
+      if (thumbnailList[0]?.originFileObj || videoList[0]?.originFileObj) {
+        isFormData = true;
+        const formData = new FormData();
+        Object.entries(values).forEach(([key, value]) => {
+          formData.append(key, value);
+        });
+        if (thumbnailList[0]?.originFileObj) {
+          formData.append('thumbnail', thumbnailList[0].originFileObj);
+        } else if (thumbnailList[0]?.url) {
+          formData.append('thumbnail_url', thumbnailList[0].url);
+        }
+        if (videoList[0]?.originFileObj) {
+          formData.append('preview_video', videoList[0].originFileObj);
+        } else if (videoList[0]?.url) {
+          formData.append('preview_video_url', videoList[0].url);
+        }
+        data = formData;
+      } else {
+        data.thumbnail_url = thumbnailList[0]?.url;
+        data.preview_video_url = videoList[0]?.url;
+      }
       let result;
       if (isEditing) {
-        result = await updateCourse(id, courseData);
+        result = await updateCourse(id, data, isFormData);
         message.success('Cập nhật khóa học thành công');
       } else {
-        result = await createCourse(courseData);
+        result = await createCourse(data);
         message.success('Tạo khóa học thành công');
       }
 
@@ -138,21 +157,11 @@ const CourseForm = () => {
 
   // File upload handlers
   const handleThumbnailChange = (info) => {
-    setThumbnailList(info.fileList);
-    if (info.file.status === 'done') {
-      message.success(`${info.file.name} tải lên thành công`);
-    } else if (info.file.status === 'error') {
-      message.error(`${info.file.name} tải lên thất bại`);
-    }
+    setThumbnailList(info.fileList.slice(-1));
   };
 
   const handleVideoChange = (info) => {
-    setVideoList(info.fileList);
-    if (info.file.status === 'done') {
-      message.success(`${info.file.name} tải lên thành công`);
-    } else if (info.file.status === 'error') {
-      message.error(`${info.file.name} tải lên thất bại`);
-    }
+    setVideoList(info.fileList.slice(-1));
   };
 
   // Upload props
@@ -162,21 +171,19 @@ const CourseForm = () => {
       const isImage = file.type.startsWith('image/');
       const isVideo = file.type.startsWith('video/');
       const maxSize = isVideo ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
-      
       if (file.size > maxSize) {
         message.error(`File quá lớn! Tối đa ${isVideo ? '100MB' : '10MB'}`);
-        return false;
+        return Upload.LIST_IGNORE;
       }
       return true;
     },
-    customRequest: ({ file, onSuccess, onError }) => {
-      // Mock upload - replace with actual upload logic
+    showUploadList: true,
+    customRequest: ({ file, onSuccess }) => {
+      // Không upload ở đây, upload khi onChange
       setTimeout(() => {
-        onSuccess({
-          url: URL.createObjectURL(file)
-        });
-      }, 1000);
-    }
+        onSuccess('ok');
+      }, 0);
+    },
   };
 
   if (loadingData) {
