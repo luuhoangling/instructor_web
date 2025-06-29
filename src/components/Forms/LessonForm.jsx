@@ -57,38 +57,45 @@ const LessonForm = ({ courseId, sectionId, lesson, onSuccess, onCancel }) => {
     setLoading(true);
     try {
       let response;
-      if (contentType === 'video' && fileList.length > 0) {
-        const fileObj = fileList[0].originFileObj || fileList[0];
-        console.log('[DEBUG] fileList:', fileList);
-        console.log('[DEBUG] fileObj:', fileObj);
-        if (!(fileObj instanceof File)) {
-          message.error('File video không hợp lệ!');
-          setLoading(false);
-          return;
-        }
-        const formData = new FormData();
-        formData.append('title', values.title);
-        formData.append('description', values.description || '');
-        formData.append('content_type', values.content_type);
-        formData.append('order_index', values.order_index);
-        formData.append('duration', values.duration || 0);
-        formData.append('is_free', values.is_free);
-        formData.append('can_preview', values.can_preview);
-        formData.append('section_id', sectionId);
-        formData.append('course_id', courseId);
-        formData.append('video', fileObj);
-        // Debug log FormData
-        for (let pair of formData.entries()) {
-          console.log(`[DEBUG] FormData: ${pair[0]} =`, pair[1]);
-        }
-        if (isEditing) {
-          response = await updateLesson(lesson.id, formData, true);
-          message.success('Cập nhật bài học thành công');
+      // Xử lý cho bài học video
+      if (contentType === 'video') {
+        const fileObj = fileList[0]?.originFileObj || fileList[0];
+        // Nếu có file mới (instance của File), upload file
+        if (fileObj instanceof File) {
+          const formData = new FormData();
+          formData.append('title', values.title);
+          formData.append('description', values.description || '');
+          formData.append('content_type', values.content_type);
+          formData.append('order_index', values.order_index);
+          formData.append('duration', values.duration ?? 0);
+          formData.append('is_free', values.is_free);
+          formData.append('can_preview', values.can_preview);
+          formData.append('section_id', sectionId);
+          formData.append('course_id', courseId);
+          formData.append('video', fileObj);
+          if (isEditing) {
+            response = await updateLesson(lesson.id, formData, true);
+            message.success('Cập nhật bài học thành công');
+          } else {
+            response = await createLesson(sectionId, formData, true);
+            message.success('Tạo bài học thành công');
+          }
         } else {
-          response = await createLesson(sectionId, formData, true);
-          message.success('Tạo bài học thành công');
+          // Không có file mới, chỉ gửi content_url cũ (nếu có)
+          const lessonData = {
+            ...values,
+            content_url: fileList[0]?.url || fileList[0]?.response?.url || lesson?.content_url,
+            section_id: sectionId,
+            course_id: courseId
+          };
+          if (isEditing) {
+            await updateLesson(lesson.id, lessonData);
+            message.success('Cập nhật bài học thành công');
+          } else {
+            await createLesson(sectionId, lessonData);
+            message.success('Tạo bài học thành công');
+          }
         }
-        console.log('[DEBUG] Server response:', response);
       } else {
         const lessonData = {
           ...values,
@@ -96,7 +103,6 @@ const LessonForm = ({ courseId, sectionId, lesson, onSuccess, onCancel }) => {
           section_id: sectionId,
           course_id: courseId
         };
-        console.log('[DEBUG] lessonData (no video):', lessonData);
         if (isEditing) {
           await updateLesson(lesson.id, lessonData);
           message.success('Cập nhật bài học thành công');
@@ -298,6 +304,7 @@ const LessonForm = ({ courseId, sectionId, lesson, onSuccess, onCancel }) => {
               name="duration"
               label="Thời lượng (giây)"
               rules={[
+                { required: true, message: 'Vui lòng nhập thời lượng' },
                 { type: 'number', min: 0, message: 'Thời lượng phải lớn hơn hoặc bằng 0' }
               ]}
             >
