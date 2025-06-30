@@ -399,18 +399,7 @@ const LessonForm = ({ courseId, sectionId, lesson, onSuccess, onCancel }) => {
             />
           </Form.Item>
 
-          {contentType === 'video' && (
-            <Form.Item
-              name="duration"
-              label="Thời lượng (giây)"
-              rules={[]}
-            >
-              <Input
-                style={{ width: '100%', border: '1px solid #d9d9d9', borderRadius: 4 }}
-                placeholder="0"
-              />
-            </Form.Item>
-          )}
+         
         </TabPane>
 
         <TabPane tab="Nội dung" key="content">
