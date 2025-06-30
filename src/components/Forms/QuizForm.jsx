@@ -48,8 +48,8 @@ const QuizForm = ({ lessonId, quiz, onSuccess, onCancel }) => {
       // Initialize with one empty question
       setQuestions([{
         question_text: '',
-        options: ['', '', '', ''],
-        correct_option: 0,
+        options: { A: '', B: '', C: '', D: '' },
+        correct_option: 'A',
         explanation: '',
         order_index: 1
       }]);
@@ -65,9 +65,8 @@ const QuizForm = ({ lessonId, quiz, onSuccess, onCancel }) => {
 
     const invalidQuestions = questions.filter(q =>
       !q.question_text.trim() ||
-      q.options.some(opt => !opt.trim()) ||
-      q.correct_option < 0 ||
-      q.correct_option >= q.options.length
+      Object.values(q.options).some(opt => !opt.trim()) ||
+      !['A', 'B', 'C', 'D'].includes(q.correct_option)
     );
     if (!isEditing && invalidQuestions.length > 0) {
       message.error('Vui lòng điền đầy đủ thông tin cho tất cả câu hỏi');
@@ -105,8 +104,8 @@ const QuizForm = ({ lessonId, quiz, onSuccess, onCancel }) => {
   const addQuestion = () => {
     setQuestions([...questions, {
       question_text: '',
-      options: ['', '', '', ''],
-      correct_option: 0,
+      options: { A: '', B: '', C: '', D: '' },
+      correct_option: 'A',
       explanation: '',
       order_index: questions.length + 1
     }]);
@@ -119,17 +118,13 @@ const QuizForm = ({ lessonId, quiz, onSuccess, onCancel }) => {
 
   const updateQuestion = (index, field, value) => {
     const newQuestions = [...questions];
-    if (field === 'options') {
-      newQuestions[index].options = value;
-    } else {
-      newQuestions[index][field] = value;
-    }
+    newQuestions[index][field] = value;
     setQuestions(newQuestions);
   };
 
-  const updateOption = (questionIndex, optionIndex, value) => {
+  const updateOption = (questionIndex, optionKey, value) => {
     const newQuestions = [...questions];
-    newQuestions[questionIndex].options[optionIndex] = value;
+    newQuestions[questionIndex].options[optionKey] = value;
     setQuestions(newQuestions);
   };
 
@@ -216,17 +211,17 @@ const QuizForm = ({ lessonId, quiz, onSuccess, onCancel }) => {
           </Form.Item>
 
           <Form.Item label="Các lựa chọn" required>
-            {question.options.map((option, optionIndex) => (
-              <Row key={optionIndex} gutter={8} style={{ marginBottom: 8 }}>
+            {Object.entries(question.options).map(([key, option]) => (
+              <Row key={key} gutter={8} style={{ marginBottom: 8 }}>
                 <Col span={20}>
                   <Input
                     value={option}
-                    onChange={(e) => updateOption(questionIndex, optionIndex, e.target.value)}
-                    placeholder={`Lựa chọn ${String.fromCharCode(65 + optionIndex)}`}
+                    onChange={(e) => updateOption(questionIndex, key, e.target.value)}
+                    placeholder={`Lựa chọn ${key}`}
                   />
                 </Col>
                 <Col span={4}>
-                  {question.correct_option === optionIndex && (
+                  {question.correct_option === key && (
                     <Button type="primary" size="small" style={{ width: '100%' }}>
                       Đúng
                     </Button>
@@ -242,9 +237,9 @@ const QuizForm = ({ lessonId, quiz, onSuccess, onCancel }) => {
               onChange={(value) => updateQuestion(questionIndex, 'correct_option', value)}
               style={{ width: '100%' }}
             >
-              {question.options.map((option, index) => (
-                <Option key={index} value={index}>
-                  {String.fromCharCode(65 + index)}: {option || `Lựa chọn ${index + 1}`}
+              {Object.entries(question.options).map(([key, option]) => (
+                <Option key={key} value={key}>
+                  {key}: {option || `Lựa chọn ${key}`}
                 </Option>
               ))}
             </Select>
