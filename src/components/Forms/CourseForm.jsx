@@ -27,6 +27,7 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { createCourse, updateCourse, getCourse } from '../../services/api';
 import { uploadFile } from '../../services/upload';
+import { getCurrentUser } from '../../services/authService';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -42,6 +43,7 @@ const CourseForm = () => {
   const { id } = useParams();
   
   const isEditing = !!id;
+  const currentUser = getCurrentUser();
 
   // Load course data for editing
   useEffect(() => {
@@ -65,7 +67,8 @@ const CourseForm = () => {
         level: course.level,
         is_published: course.is_published,
         is_featured: course.is_featured,
-        category_id: course.category_id
+        category_id: course.category_id,
+        username: course.username
       });
 
       // Set file lists
@@ -100,14 +103,22 @@ const CourseForm = () => {
     setLoading(true);
     try {
       let isFormData = false;
-      let data = { ...values };
+      let data = { 
+        ...values, 
+        username: currentUser?.username || currentUser?.name || values.username 
+      };
       // Chuẩn bị file cho FormData nếu có file mới
       if (thumbnailList[0]?.originFileObj || videoList[0]?.originFileObj) {
         isFormData = true;
         const formData = new FormData();
         Object.entries(values).forEach(([key, value]) => {
-          formData.append(key, value);
+          // Bỏ qua username ở đây vì sẽ set riêng
+          if (key !== 'username') {
+            formData.append(key, value);
+          }
         });
+        // Đảm bảo username luôn là của user hiện tại
+        formData.append('username', currentUser?.username || currentUser?.name || values.username);
         if (thumbnailList[0]?.originFileObj) {
           formData.append('thumbnail', thumbnailList[0].originFileObj);
         } else if (thumbnailList[0]?.url) {
@@ -221,7 +232,8 @@ const CourseForm = () => {
           level: 'Beginner',
           is_published: false,
           is_featured: false,
-          price: 0
+          price: 0,
+          username: currentUser?.username || currentUser?.name || ''
         }}
       >
         <Row gutter={24}>
@@ -239,6 +251,22 @@ const CourseForm = () => {
                 <Input 
                   placeholder="Ví dụ: Học Flutter từ A-Z"
                   size="large"
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="username"
+                label="Tên giảng viên"
+                rules={[
+                  { required: true, message: 'Vui lòng nhập tên giảng viên' },
+                  { max: 100, message: 'Tên giảng viên không được quá 100 ký tự' }
+                ]}
+              >
+                <Input 
+                  placeholder="Tên giảng viên"
+                  size="large"
+                  readOnly
+                  style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
                 />
               </Form.Item>
 
