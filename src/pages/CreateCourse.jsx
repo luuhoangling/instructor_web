@@ -224,6 +224,18 @@ const CreateCourse = () => {
       const values = await form.validateFields();
       const finalData = { ...formData, ...values };
 
+      // Đảm bảo các trường boolean có giá trị mặc định
+      finalData.is_published = finalData.is_published || false;
+      finalData.is_featured = finalData.is_featured || false;
+      
+      // Đảm bảo các trường số có giá trị hợp lệ
+      if (finalData.price === undefined || finalData.price === null) {
+        finalData.price = 0;
+      }
+      if (finalData.discount_price === undefined || finalData.discount_price === null) {
+        finalData.discount_price = 0;
+      }
+
       // TODO: Handle file upload to server here
       if (fileList.length > 0) {
         // Upload thumbnail and get URL
@@ -514,7 +526,9 @@ const CreateCourse = () => {
           initialValues={{
             is_published: false,
             is_featured: false,
-            price: 0
+            price: 0,
+            discount_price: 0,
+            level: 'Beginner'
           }}
         >
           {renderStepContent()}

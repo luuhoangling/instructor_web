@@ -222,24 +222,36 @@ const DetailForm = () => {
             break;
             
           case 'lesson':
-            if (!nodeData?.course_id || !nodeData?.section_id) {
-              throw new Error('Course ID and Section ID are required');
+            if (!nodeData?.section_id) {
+              throw new Error('Section ID is required');
             }
-            result = await apiFunction(nodeData.course_id, nodeData.section_id, values);
+            // Đảm bảo các trường boolean có giá trị mặc định
+            const lessonData = {
+              ...values,
+              is_free: values.is_free !== undefined ? values.is_free : false,
+              can_preview: values.can_preview !== undefined ? values.can_preview : false,
+              duration: values.duration !== undefined ? values.duration : 0
+            };
+            result = await apiFunction(nodeData.section_id, lessonData);
             break;
             
           case 'quiz':
-            if (!nodeData?.course_id || !nodeData?.section_id) {
-              throw new Error('Course ID and Section ID are required');
+            if (!nodeData?.lesson_id) {
+              throw new Error('Lesson ID is required');
             }
-            result = await apiFunction(nodeData.course_id, nodeData.section_id, values);
+            // Đảm bảo các trường boolean có giá trị mặc định nếu cần
+            const quizData = {
+              ...values,
+              // Thêm validation cho quiz nếu cần
+            };
+            result = await apiFunction(nodeData.lesson_id, quizData);
             break;
             
           case 'question':
-            if (!nodeData?.course_id || !nodeData?.section_id || !nodeData?.quiz_id) {
-              throw new Error('Course ID, Section ID and Quiz ID are required');
+            if (!nodeData?.quiz_id) {
+              throw new Error('Quiz ID is required');
             }
-            result = await apiFunction(nodeData.course_id, nodeData.section_id, nodeData.quiz_id, values);
+            result = await apiFunction(nodeData.quiz_id, values);
             break;
             
           default:
@@ -384,6 +396,20 @@ const DetailForm = () => {
         onFinish={handleSubmit}
         onFinishFailed={handleSubmitFailed}
         autoComplete="off"
+        initialValues={{
+          // Default values for lesson
+          is_free: false,
+          can_preview: false,
+          duration: 0,
+          order_index: 1,
+          content_type: 'video',
+          // Default values for course
+          is_published: false,
+          is_featured: false,
+          price: 0,
+          discount_price: 0,
+          level: 'Beginner'
+        }}
       >
         {renderFormFields()}
         

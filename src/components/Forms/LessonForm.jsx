@@ -102,8 +102,9 @@ const LessonForm = ({ courseId, sectionId, lesson, onSuccess, onCancel }) => {
           formData.append('content_type', values.content_type);
           formData.append('order_index', values.order_index);
           formData.append('duration', values.duration ?? 0);
-          formData.append('is_free', values.is_free);
-          formData.append('can_preview', values.can_preview);
+          // Xử lý đặc biệt cho các trường boolean
+          formData.append('is_free', values.is_free !== undefined ? values.is_free.toString() : 'false');
+          formData.append('can_preview', values.can_preview !== undefined ? values.can_preview.toString() : 'false');
           formData.append('section_id', sectionId);
           formData.append('course_id', courseId);
           formData.append('video', fileObj);
@@ -120,7 +121,10 @@ const LessonForm = ({ courseId, sectionId, lesson, onSuccess, onCancel }) => {
             ...values,
             content_url: fileList[0]?.url || fileList[0]?.response?.url || lesson?.content_url,
             section_id: sectionId,
-            course_id: courseId
+            course_id: courseId,
+            // Đảm bảo các trường boolean có giá trị hợp lệ
+            is_free: values.is_free !== undefined ? values.is_free : false,
+            can_preview: values.can_preview !== undefined ? values.can_preview : false
           };
           if (isEditing) {
             await updateLesson(lesson.id, lessonData);
@@ -135,7 +139,10 @@ const LessonForm = ({ courseId, sectionId, lesson, onSuccess, onCancel }) => {
           ...values,
           content_url: fileList[0]?.url || fileList[0]?.response?.url,
           section_id: sectionId,
-          course_id: courseId
+          course_id: courseId,
+          // Đảm bảo các trường boolean có giá trị hợp lệ
+          is_free: values.is_free !== undefined ? values.is_free : false,
+          can_preview: values.can_preview !== undefined ? values.can_preview : false
         };
         if (isEditing) {
           await updateLesson(lesson.id, lessonData);

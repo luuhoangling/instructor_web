@@ -114,7 +114,12 @@ const CourseForm = () => {
         Object.entries(values).forEach(([key, value]) => {
           // Bỏ qua username ở đây vì sẽ set riêng
           if (key !== 'username') {
-            formData.append(key, value);
+            // Xử lý đặc biệt cho các trường boolean
+            if (typeof value === 'boolean') {
+              formData.append(key, value.toString());
+            } else if (value !== undefined && value !== null && value !== '') {
+              formData.append(key, value);
+            }
           }
         });
         // Đảm bảo username luôn là của user hiện tại
