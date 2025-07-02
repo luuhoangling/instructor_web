@@ -31,7 +31,7 @@ import {
   DollarOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { getCourses, deleteCourse } from '../services/api';
+import { getCourses, deleteCourse, getRevenueStats } from '../services/api';
 import { formatCurrency, formatDate } from '../utils/formatters';
 
 const { Title, Text } = Typography;
@@ -41,6 +41,11 @@ const { Option } = Select;
 const CourseManagement = () => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [revenueStats, setRevenueStats] = useState({
+    totalRevenue: 0,
+    totalStudents: 0,
+    totalCourses: 0
+  });
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -99,10 +104,46 @@ const CourseManagement = () => {
     }
   };
 
+  // Load revenue statistics
+  const loadRevenueStats = async () => {
+    try {
+      const stats = await getRevenueStats();
+      setRevenueStats({
+        totalRevenue: stats.totalRevenue || 0,
+        totalStudents: stats.totalStudents || 0,
+        totalCourses: stats.totalCourses || 0
+      });
+    } catch (error) {
+      console.error('Failed to load revenue stats:', error);
+      // Fallback: calculate from current courses data
+      // Note: student_count may not be available in current course data
+      // This is a simplified calculation and should be updated when backend provides student_count
+      const totalRevenue = courses.reduce((sum, course) => {
+        const price = course.discount_price || course.price || 0;
+        const students = course.student_count || 0; // Backend should provide this field
+        return sum + (price * students);
+      }, 0);
+      
+      setRevenueStats({
+        totalRevenue,
+        totalStudents: courses.reduce((sum, c) => sum + (c.student_count || 0), 0),
+        totalCourses: courses.length
+      });
+    }
+  };
+
   // Initial load
   useEffect(() => {
     loadCourses();
+    loadRevenueStats();
   }, []);
+
+  // Reload revenue stats when courses change
+  useEffect(() => {
+    if (courses.length > 0) {
+      loadRevenueStats();
+    }
+  }, [courses]);
 
   // Handle search
   const handleSearch = (value) => {
@@ -277,6 +318,18 @@ const CourseManagement = () => {
       )
     },
     {
+      title: 'Học viên',
+      dataIndex: 'student_count',
+      key: 'student_count',
+      width: 100,
+      render: (count) => (
+        <div style={{ textAlign: 'center' }}>
+          <UserOutlined style={{ marginRight: 4 }} />
+          {count || 0}
+        </div>
+      )
+    },
+    {
       title: 'Trạng thái',
       dataIndex: 'is_published',
       key: 'is_published',
@@ -319,7 +372,8 @@ const CourseManagement = () => {
     total: courses.length,
     published: courses.filter(c => c.is_published).length,
     draft: courses.filter(c => !c.is_published).length,
-    totalRevenue: courses.reduce((sum, c) => sum + (c.discount_price || c.price || 0), 0)
+    totalRevenue: revenueStats.totalRevenue,
+    totalStudents: revenueStats.totalStudents
   };
 
   return (
@@ -335,8 +389,8 @@ const CourseManagement = () => {
       </div>
 
       {/* Statistics */}
-      <Row gutter={16} style={{ marginBottom: 24 }}>
-        <Col span={6}>
+      <Row gutter={16} style={{ marginBottom: 16 }}>
+        <Col span={12}>
           <Card>
             <Statistic 
               title="Tổng khóa học" 
@@ -345,7 +399,23 @@ const CourseManagement = () => {
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col span={12}>
+          <Card>
+            <Statistic 
+              title="Tổng doanh thu" 
+              value={stats.totalRevenue}
+              formatter={(value) => formatCurrency(value)}
+              prefix={<DollarOutlined />}
+            />
+            <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginTop: '4px' }}>
+              Từ {stats.totalStudents} học viên
+            </Text>
+          </Card>
+        </Col>
+      </Row>
+
+      <Row gutter={16} style={{ marginBottom: 24 }}>
+        <Col span={12}>
           <Card>
             <Statistic 
               title="Đã xuất bản" 
@@ -355,23 +425,13 @@ const CourseManagement = () => {
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col span={12}>
           <Card>
             <Statistic 
               title="Bản nháp" 
               value={stats.draft} 
               prefix={<EditOutlined />}
               valueStyle={{ color: '#cf1322' }}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic 
-              title="Tổng doanh thu" 
-              value={stats.totalRevenue}
-              formatter={(value) => formatCurrency(value)}
-              prefix={<DollarOutlined />}
             />
           </Card>
         </Col>

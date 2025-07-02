@@ -55,6 +55,20 @@ apiClient.interceptors.response.use(
 // ==================== COURSES API ====================
 
 /**
+ * Lấy thống kê doanh thu từ các khóa học
+ * @returns {Promise} Object chứa tổng doanh thu, số khóa học, số học viên
+ */
+export const getRevenueStats = async () => {
+  try {
+    const response = await apiClient.get('/courses/revenue-stats');
+    return response.data.data || response.data;
+  } catch (error) {
+    console.error('Failed to fetch revenue stats:', error);
+    throw new Error(error.response?.data?.error || `Failed to fetch revenue stats: ${error.message}`);
+  }
+}
+
+/**
  * Lấy danh sách khóa học với phân trang theo API docs
  * @param {Object} params - Query parameters
  * @param {number} params._page - Trang hiện tại (bắt đầu từ 1)
