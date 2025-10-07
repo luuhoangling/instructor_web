@@ -122,6 +122,7 @@ const CourseDetail = () => {
 
   // Handle add new item
   const handleAddNew = (type, parentNode = null) => {
+    console.log('DEBUG: handleAddNew called', { type, parentNode });
     setModalType(type);
     setEditingItem(null);
     setSelectedNode(parentNode);
@@ -292,8 +293,12 @@ const CourseDetail = () => {
         <MainContent>
           <CourseTreeView 
             course={course} 
-            onNodeSelect={handleNodeSelect}
-            selectedNode={selectedNode}
+            onSelect={handleNodeSelect}
+            onEdit={handleEdit}
+            onAddSection={() => handleAddNew('section')}
+            onAddLesson={(sectionNode) => handleAddNew('lesson', sectionNode)}
+            onAddQuiz={(lessonNode) => handleAddNew('quiz', lessonNode)}
+            selectedKeys={selectedNode ? [selectedNode.key] : []}
           />
         </MainContent>
 

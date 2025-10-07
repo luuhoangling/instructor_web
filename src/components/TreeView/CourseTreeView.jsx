@@ -178,7 +178,10 @@ const CourseTreeView = ({
         key: 'add-lesson',
         icon: <PlusOutlined />,
         label: 'Thêm bài học',
-        onClick: () => onAddLesson && onAddLesson(node)
+        onClick: () => {
+          console.log('DEBUG: Add lesson clicked', { node, onAddLesson });
+          onAddLesson && onAddLesson(node);
+        }
       });
     }
 
