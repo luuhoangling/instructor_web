@@ -26,17 +26,72 @@ import {
   FilterOutlined,
   MoreOutlined,
   BookOutlined,
-  PlayCircleOutlined,
   UserOutlined,
   DollarOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { getCourses, deleteCourse, getRevenueStats } from '../services/api';
 import { formatCurrency, formatDate } from '../utils/formatters';
+import styled from 'styled-components';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
 const { Option } = Select;
+
+// Styled components
+const PageContainer = styled.div`
+  background: #f8fafc;
+  min-height: 100vh;
+  padding: 0;
+`;
+
+const HeaderSection = styled.div`
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  padding: 32px;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 32px;
+`;
+
+const StatsContainer = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+`;
+
+const StatCard = styled(Card)`
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 10px -2px rgba(0, 0, 0, 0.06);
+  }
+`;
+
+const ContentSection = styled.div`
+  padding: 0 32px 32px;
+`;
+
+const FilterSection = styled.div`
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+`;
+
+const TableContainer = styled.div`
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+`;
 
 const CourseManagement = () => {
   const [courses, setCourses] = useState([]);
@@ -54,7 +109,6 @@ const CourseManagement = () => {
   const [filters, setFilters] = useState({
     search: '',
     level: '',
-    status: '',
     sortBy: 'created_at',
     sortOrder: 'DESC'
   });
@@ -83,10 +137,6 @@ const CourseManagement = () => {
         queryParams.level = filters.level;
       }
 
-      // Add status filter
-      if (filters.status !== '') {
-        queryParams.is_published = filters.status === 'published';
-      }
 
       const result = await getCourses(queryParams);
       
@@ -207,25 +257,20 @@ const CourseManagement = () => {
     }
   };
 
-  // Course status tag
-  const getStatusTag = (course) => {
-    if (course.is_published) {
-      return <Tag color="green">Đã xuất bản</Tag>;
-    }
-    return <Tag color="orange">Bản nháp</Tag>;
-  };
 
   // Level tag
   const getLevelTag = (level) => {
     const colors = {
-      'Beginner': 'blue',
-      'Intermediate': 'orange', 
-      'Advanced': 'red'
+      'beginner': 'blue',
+      'intermediate': 'orange',
+      'all_levels': 'green',
+      'advanced': 'red'
     };
     const labels = {
-      'Beginner': 'Cơ bản',
-      'Intermediate': 'Trung cấp',
-      'Advanced': 'Nâng cao'
+      'beginner': 'Beginner',
+      'intermediate': 'Intermediate',
+      'all_levels': 'All Levels',
+      'advanced': 'Advanced'
     };
     return <Tag color={colors[level]}>{labels[level] || level}</Tag>;
   };
@@ -330,13 +375,6 @@ const CourseManagement = () => {
       )
     },
     {
-      title: 'Trạng thái',
-      dataIndex: 'is_published',
-      key: 'is_published',
-      width: 120,
-      render: (_, record) => getStatusTag(record)
-    },
-    {
       title: 'Ngày tạo',
       dataIndex: 'created_at',
       key: 'created_at',
@@ -370,111 +408,106 @@ const CourseManagement = () => {
   // Calculate statistics
   const stats = {
     total: courses.length,
-    published: courses.filter(c => c.is_published).length,
-    draft: courses.filter(c => !c.is_published).length,
     totalRevenue: revenueStats.totalRevenue,
     totalStudents: revenueStats.totalStudents
   };
 
   return (
-    <Layout.Content style={{ padding: '24px' }}>
-      <div style={{ marginBottom: 24 }}>
-        <Title level={2}>
-          <BookOutlined style={{ marginRight: 8 }} />
-          Quản lý khóa học
-        </Title>
-        <Text type="secondary">
-          Quản lý tất cả khóa học của bạn
-        </Text>
-      </div>
+    <PageContainer>
+      {/* Header */}
+      <HeaderSection>
+        <Row justify="space-between" align="middle">
+          <Col>
+            <Title level={2} style={{ margin: 0, color: '#1f2937' }}>
+              <BookOutlined style={{ marginRight: 12, color: '#6366f1' }} />
+              Quản lý khóa học
+            </Title>
+            <Text type="secondary" style={{ fontSize: '16px' }}>
+              Quản lý tất cả khóa học của bạn
+            </Text>
+          </Col>
+          <Col>
+            <Button 
+              type="primary" 
+              icon={<PlusOutlined />}
+              onClick={() => navigate('/courses/new')}
+              size="large"
+              style={{
+                height: '48px',
+                borderRadius: '12px',
+                fontWeight: '600',
+                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                border: 'none',
+                boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)'
+              }}
+            >
+              Tạo khóa học mới
+            </Button>
+          </Col>
+        </Row>
+      </HeaderSection>
 
-      {/* Statistics */}
-      <Row gutter={16} style={{ marginBottom: 16 }}>
-        <Col span={12}>
-          <Card>
+      <ContentSection>
+        {/* Statistics */}
+        <StatsContainer>
+          <StatCard>
             <Statistic 
               title="Tổng khóa học" 
               value={stats.total} 
-              prefix={<BookOutlined />}
+              prefix={<BookOutlined style={{ color: '#6366f1' }} />}
+              valueStyle={{ color: '#1f2937', fontWeight: '600' }}
             />
-          </Card>
-        </Col>
-        <Col span={12}>
-          <Card>
+          </StatCard>
+          <StatCard>
             <Statistic 
               title="Tổng doanh thu" 
               value={stats.totalRevenue}
               formatter={(value) => formatCurrency(value)}
-              prefix={<DollarOutlined />}
+              prefix={<DollarOutlined style={{ color: '#10b981' }} />}
+              valueStyle={{ color: '#1f2937', fontWeight: '600' }}
             />
             <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginTop: '4px' }}>
               Từ {stats.totalStudents} học viên
             </Text>
-          </Card>
-        </Col>
-      </Row>
+          </StatCard>
+        </StatsContainer>
 
-      <Row gutter={16} style={{ marginBottom: 24 }}>
-        <Col span={12}>
-          <Card>
-            <Statistic 
-              title="Đã xuất bản" 
-              value={stats.published} 
-              prefix={<PlayCircleOutlined />}
-              valueStyle={{ color: '#3f8600' }}
-            />
-          </Card>
-        </Col>
-        <Col span={12}>
-          <Card>
-            <Statistic 
-              title="Bản nháp" 
-              value={stats.draft} 
-              prefix={<EditOutlined />}
-              valueStyle={{ color: '#cf1322' }}
-            />
-          </Card>
-        </Col>
-      </Row>
 
-      {/* Filters and Actions */}
-      <Card style={{ marginBottom: 16 }}>
-        <Row justify="space-between" align="middle">
-          <Col>
-            <Space size="middle">
-              <Search
-                placeholder="Tìm kiếm khóa học..."
-                allowClear
-                onSearch={handleSearch}
-                style={{ width: 250 }}
-              />
-              <Select
-                placeholder="Cấp độ"
-                allowClear
-                style={{ width: 120 }}
-                onChange={(value) => handleFilterChange('level', value)}
-              >
-                <Option value="Beginner">Cơ bản</Option>
-                <Option value="Intermediate">Trung cấp</Option>
-                <Option value="Advanced">Nâng cao</Option>
-              </Select>
-              <Select
-                placeholder="Trạng thái"
-                allowClear
-                style={{ width: 120 }}
-                onChange={(value) => handleFilterChange('status', value)}
-              >
-                <Option value="published">Đã xuất bản</Option>
-                <Option value="draft">Bản nháp</Option>
-              </Select>
-            </Space>
-          </Col>
-          <Col>
-            <Space>
-              {selectedRowKeys.length > 0 && (
-                <Popconfirm
-                  title={`Xóa ${selectedRowKeys.length} khóa học đã chọn?`}
-                  onConfirm={handleBulkDelete}
+        {/* Filters and Actions */}
+        <FilterSection>
+          <Row justify="space-between" align="middle">
+            <Col>
+              <Space size="middle">
+                <Search
+                  placeholder="Tìm kiếm khóa học..."
+                  allowClear
+                  onSearch={handleSearch}
+                  style={{ 
+                    width: 300,
+                    borderRadius: '8px'
+                  }}
+                  size="large"
+                />
+                <Select
+                  placeholder="Cấp độ"
+                  allowClear
+                  style={{ width: 150 }}
+                  onChange={(value) => handleFilterChange('level', value)}
+                  size="large"
+                >
+                  <Option value="beginner">Beginner</Option>
+                  <Option value="intermediate">Intermediate</Option>
+                  <Option value="all_levels">All Levels</Option>
+                  <Option value="advanced">Advanced</Option>
+                </Select>
+              </Space>
+            </Col>
+            <Col>
+              <Space>
+                {selectedRowKeys.length > 0 && (
+                  <Popconfirm
+                    title={`Xóa ${selectedRowKeys.length} khóa học đã chọn?`}
+                    onConfirm={handleBulkDelete}
                   okText="Xóa"
                   cancelText="Hủy"
                 >
@@ -493,28 +526,33 @@ const CourseManagement = () => {
             </Space>
           </Col>
         </Row>
-      </Card>
+      </FilterSection>
 
-      {/* Courses Table */}
-      <Card>
-        <Table
-          rowSelection={rowSelection}
-          columns={columns}
-          dataSource={courses}
-          rowKey="id"
-          loading={loading}
-          pagination={{
-            ...pagination,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total, range) => 
-              `${range[0]}-${range[1]} của ${total} khóa học`,
-          }}
-          onChange={handleTableChange}
-          scroll={{ x: 1000 }}
-        />
-      </Card>
-    </Layout.Content>
+        {/* Courses Table */}
+        <TableContainer>
+          <Table
+            rowSelection={rowSelection}
+            columns={columns}
+            dataSource={courses}
+            rowKey="id"
+            loading={loading}
+            pagination={{
+              ...pagination,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) => 
+                `${range[0]}-${range[1]} của ${total} khóa học`,
+            }}
+            onChange={handleTableChange}
+            scroll={{ x: 1000 }}
+            style={{
+              borderRadius: '16px',
+              overflow: 'hidden'
+            }}
+          />
+        </TableContainer>
+      </ContentSection>
+    </PageContainer>
   );
 };
 

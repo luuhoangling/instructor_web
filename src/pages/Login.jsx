@@ -3,7 +3,58 @@ import { Form, Input, Button, Card, Alert, Typography, Divider } from 'antd';
 import { UserOutlined, LockOutlined, BookOutlined } from '@ant-design/icons';
 import { login, isAuthenticated } from '../services/authService';
 import { useNavigate } from 'react-router-dom';
+import styled from 'styled-components';
 import './Login.css';
+
+// Styled components
+const LoginContainer = styled.div`
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+`;
+
+const LoginCard = styled(Card)`
+  width: 100%;
+  max-width: 400px;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.95);
+  
+  .ant-card-body {
+    padding: 40px;
+  }
+`;
+
+const LogoSection = styled.div`
+  text-align: center;
+  margin-bottom: 32px;
+  
+  .logo-icon {
+    font-size: 48px;
+    color: #6366f1;
+    margin-bottom: 16px;
+  }
+  
+  .logo-text {
+    font-size: 28px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+  }
+  
+  .logo-subtitle {
+    color: #6b7280;
+    font-size: 16px;
+  }
+`;
 
 const { Title, Text } = Typography;
 
@@ -42,19 +93,17 @@ const Login = () => {
   };
 
   return (
-    <div className="login-container">
-      <div className="login-background"></div>
-      <div className="login-content">
-        <Card className="login-card" bordered={false}>
-          <div className="login-header">
-            <BookOutlined className="login-icon" />
-            <Title level={2} className="login-title">
-              Hệ Thống Quản Lý Khóa Học
-            </Title>
-            <Text type="secondary" className="login-subtitle">
-              Dành cho giảng viên
-            </Text>
+    <LoginContainer>
+      <LoginCard bordered={false}>
+        <LogoSection>
+          <BookOutlined className="logo-icon" />
+          <div className="logo-text">
+            Hệ Thống Quản Lý Khóa Học
           </div>
+          <div className="logo-subtitle">
+            Dành cho giảng viên
+          </div>
+        </LogoSection>
 
           <Divider />
 
@@ -123,9 +172,8 @@ const Login = () => {
               </Button>
             </Form.Item>
           </Form>
-        </Card>
-      </div>
-    </div>
+      </LoginCard>
+    </LoginContainer>
   );
 };
 

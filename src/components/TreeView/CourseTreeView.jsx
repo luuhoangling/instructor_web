@@ -32,10 +32,36 @@ const CourseTreeView = ({
   const [expandedKeys, setExpandedKeys] = useState([]);
   const [autoExpandParent, setAutoExpandParent] = useState(true);
 
-  // Auto expand course node on mount
+  // Auto expand all nodes on mount
   useEffect(() => {
     if (course) {
-      setExpandedKeys([`course-${course.id}`]);
+      const allKeys = [];
+      
+      // Add course key
+      allKeys.push(`course-${course.id}`);
+      
+      // Add all section keys
+      if (course.sections) {
+        course.sections.forEach(section => {
+          allKeys.push(`section-${section.id}`);
+          
+          // Add all lesson keys
+          if (section.lessons) {
+            section.lessons.forEach(lesson => {
+              allKeys.push(`lesson-${lesson.id}`);
+              
+              // Add all quiz keys
+              if (lesson.quizzes) {
+                lesson.quizzes.forEach(quiz => {
+                  allKeys.push(`quiz-${quiz.id}`);
+                });
+              }
+            });
+          }
+        });
+      }
+      
+      setExpandedKeys(allKeys);
     }
   }, [course]);
 
@@ -184,12 +210,10 @@ const CourseTreeView = ({
 
   // Custom title renderer with actions
   const titleRender = (node) => {
-    // Nếu là bài học thì thêm sự kiện click để luôn mở content_url
+    // Bỏ auto mở video - chỉ hiển thị title
     const handleLessonClick = (e) => {
       e.stopPropagation();
-      if (node.type === 'lesson' && node.data?.content_url) {
-        window.open(node.data.content_url, '_blank');
-      }
+      // Không auto mở video nữa
     };
     // Xác định style phân cấp
     let level = 0;
@@ -201,13 +225,13 @@ const CourseTreeView = ({
     return (
       <div
         style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', cursor: node.type === 'lesson' ? 'pointer' : 'default',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', cursor: 'default',
           paddingLeft: 8 + level * 16,
           borderLeft: `3px solid ${borderColors[level]}`,
           background: bgColors[level],
           minHeight: 36
         }}
-        onClick={node.type === 'lesson' ? handleLessonClick : undefined}
+        // Bỏ auto click cho lesson
       >
         <Space size={4}>
           {/* {node.icon} */}
@@ -221,19 +245,42 @@ const CourseTreeView = ({
             </Text>
           )}
         </Space>
-        <Dropdown 
-          menu={getDropdownMenu(node)} 
-          trigger={['click']}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Button 
-            type="text" 
-            size="small" 
-            icon={<MoreOutlined />}
+        
+        <Space size={4}>
+          {/* Nút Xem cho lesson */}
+          {node.type === 'lesson' && node.data?.content_url && (
+            <Button 
+              type="link" 
+              size="small" 
+              icon={<PlayCircleOutlined />}
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(node.data.content_url, '_blank');
+              }}
+              style={{ 
+                padding: '4px 8px',
+                height: 'auto',
+                fontSize: '12px'
+              }}
+            >
+              Xem
+            </Button>
+          )}
+          
+          <Dropdown 
+            menu={getDropdownMenu(node)} 
+            trigger={['click']}
             onClick={(e) => e.stopPropagation()}
-            style={{ opacity: 0.7 }}
-          />
-        </Dropdown>
+          >
+            <Button 
+              type="text" 
+              size="small" 
+              icon={<MoreOutlined />}
+              onClick={(e) => e.stopPropagation()}
+              style={{ opacity: 0.7 }}
+            />
+          </Dropdown>
+        </Space>
       </div>
     );
   };

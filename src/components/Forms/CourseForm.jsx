@@ -26,7 +26,6 @@ import {
 } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { createCourse, updateCourse, getCourse } from '../../services/api';
-import { uploadFile } from '../../services/upload';
 import { getCurrentUser } from '../../services/authService';
 
 const { Title, Text } = Typography;
@@ -52,6 +51,15 @@ const CourseForm = () => {
     }
   }, [id]);
 
+  // Set username when component mounts
+  useEffect(() => {
+    if (currentUser) {
+      form.setFieldsValue({
+        username: currentUser?.username || currentUser?.name || ''
+      });
+    }
+  }, [currentUser, form]);
+
   const loadCourseData = async () => {
     setLoadingData(true);
     try {
@@ -65,10 +73,9 @@ const CourseForm = () => {
         price: course.price,
         discount_price: course.discount_price,
         level: course.level,
-        is_published: course.is_published,
         is_featured: course.is_featured,
         category_id: course.category_id,
-        username: course.username
+        username: currentUser?.username || currentUser?.name || course.username || ''
       });
 
       // Set file lists
@@ -107,44 +114,227 @@ const CourseForm = () => {
         ...values, 
         username: currentUser?.username || currentUser?.name || values.username 
       };
-      // Chuẩn bị file cho FormData nếu có file mới
+      
+      // Remove ALL time-related fields completely
+      const timeRelatedFields = [
+        'created_at', 'updated_at', 'deleted_at', 'createdAt', 'updatedAt', 'deletedAt',
+        'id', 'user_id', 'instructor_id', 'course_id',
+        'timestamp', 'time', 'date', 'datetime', 'created', 'updated', 'modified'
+      ];
+      
+      // Remove all time-related fields
+      timeRelatedFields.forEach(field => {
+        if (data[field]) {
+          console.log(`DEBUG: Removing time field: ${field} = ${data[field]}`);
+          delete data[field];
+        }
+      });
+      
+      // Remove any field that contains time/timestamp patterns
+      Object.keys(data).forEach(key => {
+        const value = data[key];
+        if (value && typeof value === 'string' && (
+          value.includes('T') || // Any field with T (time)
+          value.includes('Z') || // Any field with Z (timezone)
+          value.includes('+') && value.includes(':') || // Timezone offset
+          /^\d{4}-\d{2}-\d{2}T/.test(value) || // ISO date with time
+          /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/.test(value) || // SQL datetime
+          /time|date|created|updated|modified/i.test(key) // Field names with time keywords
+        )) {
+          console.log(`DEBUG: Removing time-related field: ${key} = ${value}`);
+          delete data[key];
+        }
+      });
+      
+      // Remove empty or null values
+      Object.keys(data).forEach(key => {
+        if (data[key] === null || data[key] === undefined || data[key] === '') {
+          console.log(`DEBUG: Removing empty field: ${key} = ${data[key]}`);
+          delete data[key];
+        }
+      });
+      
+      // Only send allowed fields for course update - STRICT WHITELIST
+      const allowedFields = [
+        'title', 'subtitle', 'description', 'price', 'discount_price', 
+        'level', 'category_id', 'username', 'is_featured', 'is_published',
+        'thumbnail_url', 'preview_video_url', 'demo_video_url',
+        'total_duration', 'requirements', 'what_you_learn'
+      ];
+      
+      const cleanedData = {};
+      allowedFields.forEach(field => {
+        if (data[field] !== undefined && data[field] !== null && data[field] !== '') {
+          // Double check - no time fields allowed
+          const value = data[field];
+          if (typeof value === 'string' && (
+            value.includes('T') || value.includes('Z') || 
+            value.includes('+') || /^\d{4}-\d{2}-\d{2}T/.test(value)
+          )) {
+            console.error(`ERROR: Time field found in allowed field: ${field} = ${value}`);
+            return; // Skip this field
+          }
+          cleanedData[field] = value;
+        }
+      });
+      
+      data = cleanedData;
+      
+      console.log('DEBUG: Final cleaned data (STRICT WHITELIST):');
+      console.log(JSON.stringify(data, null, 2));
+      
+      // Debug: Log all data before processing
+      console.log('DEBUG: Raw form data before processing:');
+      console.log(JSON.stringify(data, null, 2));
+      
+      // Debug: Check for any remaining time fields
+      console.log('DEBUG: Checking for any remaining time fields:');
+      Object.entries(data).forEach(([key, value]) => {
+        if (value && typeof value === 'string' && (
+          value.includes('T') || value.includes('Z') || 
+          value.includes('+') || /^\d{4}-\d{2}-\d{2}T/.test(value)
+        )) {
+          console.error(`ERROR: Found time field that should be removed: ${key} = ${value}`);
+        }
+      });
+
+      // Prepare FormData if files are present
       if (thumbnailList[0]?.originFileObj || videoList[0]?.originFileObj) {
         isFormData = true;
         const formData = new FormData();
-        Object.entries(values).forEach(([key, value]) => {
-          // Bỏ qua username ở đây vì sẽ set riêng
-          if (key !== 'username') {
-            // Xử lý đặc biệt cho các trường boolean
+        
+        // Append all form fields (only allowed fields)
+        Object.entries(data).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== '') {
+            // Skip ALL time-related fields
+            if (typeof value === 'string' && (
+              value.includes('T') || // Any field with T (time)
+              value.includes('Z') || // Any field with Z (timezone)
+              value.includes('+') && value.includes(':') || // Timezone offset
+              /^\d{4}-\d{2}-\d{2}T/.test(value) || // ISO date with time
+              /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/.test(value) || // SQL datetime
+              /time|date|created|updated|modified/i.test(key) // Field names with time keywords
+            )) {
+              console.log(`DEBUG: Skipping time field in FormData: ${key} = ${value}`);
+              return;
+            }
+            
             if (typeof value === 'boolean') {
               formData.append(key, value.toString());
-            } else if (value !== undefined && value !== null && value !== '') {
+            } else if (typeof value === 'number') {
+              formData.append(key, value.toString());
+            } else if (value instanceof Date) {
+              // Skip Date objects completely
+              console.log(`DEBUG: Skipping Date object in FormData: ${key} = ${value}`);
+              return;
+            } else {
               formData.append(key, value);
             }
           }
         });
-        // Đảm bảo username luôn là của user hiện tại
-        formData.append('username', currentUser?.username || currentUser?.name || values.username);
+
+        // Append files with correct field names for Supabase
         if (thumbnailList[0]?.originFileObj) {
+          console.log('DEBUG: Appending thumbnail file:', thumbnailList[0].originFileObj.name);
           formData.append('thumbnail', thumbnailList[0].originFileObj);
         } else if (thumbnailList[0]?.url) {
+          console.log('DEBUG: Appending thumbnail URL:', thumbnailList[0].url);
           formData.append('thumbnail_url', thumbnailList[0].url);
         }
+
         if (videoList[0]?.originFileObj) {
+          console.log('DEBUG: Appending video file:', videoList[0].originFileObj.name);
           formData.append('preview_video', videoList[0].originFileObj);
         } else if (videoList[0]?.url) {
+          console.log('DEBUG: Appending video URL:', videoList[0].url);
           formData.append('preview_video_url', videoList[0].url);
         }
+
+        // Debug: Log all FormData entries
+        console.log('DEBUG: FormData contents:');
+        for (let [key, value] of formData.entries()) {
+          if (value instanceof File) {
+            console.log(`${key}: [File] ${value.name} (${value.size} bytes)`);
+          } else {
+            console.log(`${key}:`, value, `(type: ${typeof value})`);
+            
+            // Check for time fields in FormData
+            if (typeof value === 'string' && (
+              value.includes('T') || value.includes('Z') || 
+              value.includes('+') || /^\d{4}-\d{2}-\d{2}T/.test(value)
+            )) {
+              console.error(`ERROR: Found time field in FormData: ${key} = ${value}`);
+            }
+          }
+        }
+        
+        // Debug: Check for timestamp fields that might cause issues
+        console.log('DEBUG: Checking for timestamp fields in data:');
+        Object.entries(data).forEach(([key, value]) => {
+          if (value && (value instanceof Date || (typeof value === 'string' && value.includes('T')))) {
+            console.log(`TIMESTAMP FIELD: ${key} = ${value} (type: ${typeof value})`);
+          }
+        });
+        
+        // Debug: Show example format
+        console.log('DEBUG: Example FormData format:');
+        console.log('const formData = new FormData();');
+        console.log('');
+        console.log('// Basic info');
+        Object.entries(data).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== '') {
+            if (typeof value === 'string') {
+              console.log(`formData.append('${key}', '${value}');`);
+            } else if (typeof value === 'number') {
+              console.log(`formData.append('${key}', '${value}');`);
+            } else if (typeof value === 'boolean') {
+              console.log(`formData.append('${key}', '${value}');`);
+            }
+          }
+        });
+        
+        console.log('');
+        console.log('// Files');
+        if (thumbnailList[0]?.originFileObj) {
+          console.log(`formData.append('thumbnail', imageFile); // File object`);
+        }
+        if (videoList[0]?.originFileObj) {
+          console.log(`formData.append('preview_video', videoFile); // File object`);
+        }
+
         data = formData;
       } else {
+        // No new files, just use existing URLs
         data.thumbnail_url = thumbnailList[0]?.url;
         data.preview_video_url = videoList[0]?.url;
+        
+        // Debug: Log JSON data being sent
+        console.log('DEBUG: Sending JSON data (no files):');
+        console.log(JSON.stringify(data, null, 2));
       }
+
+      // Final debug before API call
+      console.log('DEBUG: FINAL DATA BEING SENT TO API:');
+      console.log('isFormData:', isFormData);
+      if (isFormData) {
+        console.log('FormData entries:');
+        for (let [key, value] of data.entries()) {
+          if (value instanceof File) {
+            console.log(`${key}: [File] ${value.name}`);
+          } else {
+            console.log(`${key}: ${value} (type: ${typeof value})`);
+          }
+        }
+      } else {
+        console.log('JSON data:', JSON.stringify(data, null, 2));
+      }
+      
       let result;
       if (isEditing) {
         result = await updateCourse(id, data, isFormData);
         message.success('Cập nhật khóa học thành công');
       } else {
-        result = await createCourse(data);
+        result = await createCourse(data, isFormData);
         message.success('Tạo khóa học thành công');
       }
 
@@ -153,20 +343,24 @@ const CourseForm = () => {
       
     } catch (error) {
       console.error('Failed to save course:', error);
-      message.error('Không thể lưu khóa học: ' + error.message);
+      
+      // Debug: Log detailed error information
+      if (error.response) {
+        console.error('Server response status:', error.response.status);
+        console.error('Server response data:', error.response.data);
+        console.error('Server response headers:', error.response.headers);
+      }
+      
+      // Show more detailed error message
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message;
+      message.error('Không thể lưu khóa học: ' + errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle save as draft
-  const handleSaveDraft = () => {
-    form.setFieldsValue({ is_published: false });
-    form.submit();
-  };
-
-  // Handle publish
-  const handlePublish = () => {
+  // Handle save and publish
+  const handleSaveAndPublish = () => {
     form.setFieldsValue({ is_published: true });
     form.submit();
   };
@@ -234,8 +428,7 @@ const CourseForm = () => {
         layout="vertical"
         onFinish={handleSubmit}
         initialValues={{
-          level: 'Beginner',
-          is_published: false,
+          level: 'beginner',
           is_featured: false,
           price: 0,
           username: currentUser?.username || currentUser?.name || ''
@@ -310,9 +503,10 @@ const CourseForm = () => {
                     ]}
                   >
                     <Select size="large">
-                      <Option value="Beginner">Cơ bản</Option>
-                      <Option value="Intermediate">Trung cấp</Option>
-                      <Option value="Advanced">Nâng cao</Option>
+                      <Option value="beginner">Beginner</Option>
+                      <Option value="intermediate">Intermediate</Option>
+                      <Option value="all_levels">All Levels</Option>
+                      <Option value="advanced">Advanced</Option>
                     </Select>
                   </Form.Item>
                 </Col>
@@ -412,26 +606,20 @@ const CourseForm = () => {
                 ]}
               >
                 <Select placeholder="Chọn danh mục">
-                  <Option value={1}>Lập trình Web</Option>
-                  <Option value={2}>Mobile Development</Option>
-                  <Option value={3}>Data Science</Option>
-                  <Option value={4}>DevOps</Option>
-                  <Option value={5}>UI/UX Design</Option>
+                  <Option value={1}>Develop</Option>
+                  <Option value={2}>Design</Option>
+                  <Option value={3}>Marketing</Option>
+                  <Option value={4}>Develop</Option>
+                  <Option value={5}>Business</Option>
+                  <Option value={6}>Language</Option>
+                  <Option value={7}>Photo</Option>
+                  <Option value={8}>Music</Option>
+                  <Option value={9}>Personal</Option>
                 </Select>
               </Form.Item>
 
               <Divider />
 
-              <Form.Item
-                name="is_published"
-                label="Trạng thái xuất bản"
-                valuePropName="checked"
-              >
-                <Switch 
-                  checkedChildren="Đã xuất bản" 
-                  unCheckedChildren="Bản nháp"
-                />
-              </Form.Item>
 
               <Form.Item
                 name="is_featured"
@@ -453,20 +641,10 @@ const CourseForm = () => {
                     size="large"
                     icon={<SaveOutlined />}
                     loading={loading}
-                    onClick={handlePublish}
+                    onClick={handleSaveAndPublish}
                     style={{ width: '100%' }}
                   >
                     {isEditing ? 'Lưu & Xuất bản' : 'Tạo & Xuất bản'}
-                  </Button>
-                  
-                  <Button 
-                    size="large"
-                    icon={<SaveOutlined />}
-                    loading={loading}
-                    onClick={handleSaveDraft}
-                    style={{ width: '100%' }}
-                  >
-                    {isEditing ? 'Lưu bản nháp' : 'Lưu bản nháp'}
                   </Button>
 
                   {isEditing && (
@@ -489,3 +667,4 @@ const CourseForm = () => {
 };
 
 export default CourseForm;
+

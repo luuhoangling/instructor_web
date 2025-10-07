@@ -16,34 +16,65 @@ import ErrorBoundary from './components/ErrorBoundary';
 import './App.css';
 import ProfilePage from './pages/ProfilePage';
 
-// Ant Design theme configuration
+// Ant Design theme configuration - Modern Design
 const theme = {
   token: {
-    colorPrimary: '#1890ff',
-    colorSuccess: '#52c41a',
-    colorWarning: '#fa8c16',
-    colorError: '#ff4d4f',
-    borderRadius: 6,
-    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+    colorPrimary: '#6366f1', // Modern indigo
+    colorSuccess: '#10b981', // Modern emerald
+    colorWarning: '#f59e0b', // Modern amber
+    colorError: '#ef4444', // Modern red
+    colorInfo: '#3b82f6', // Modern blue
+    borderRadius: 12, // More rounded corners
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif',
+    fontSize: 14,
+    lineHeight: 1.6,
+    colorText: '#1f2937',
+    colorTextSecondary: '#6b7280',
+    colorBgContainer: '#ffffff',
+    colorBgElevated: '#ffffff',
+    colorBgLayout: '#f8fafc',
   },
   components: {
     Layout: {
-      siderBg: '#fff',
-      headerBg: '#fff',
+      siderBg: '#ffffff',
+      headerBg: '#ffffff',
+      bodyBg: '#f8fafc',
     },
     Menu: {
       itemBg: 'transparent',
-      itemHoverBg: '#f5f5f5',
-      itemSelectedBg: '#e6f7ff',
-      itemSelectedColor: '#1890ff',
+      itemHoverBg: '#f1f5f9',
+      itemSelectedBg: '#e0e7ff',
+      itemSelectedColor: '#6366f1',
+      itemActiveBg: '#e0e7ff',
+      borderRadius: 8,
     },
     Tree: {
-      nodeHoverBg: '#f5f5f5',
-      nodeSelectedBg: '#e6f7ff',
+      nodeHoverBg: '#f1f5f9',
+      nodeSelectedBg: '#e0e7ff',
+      nodeSelectedColor: '#6366f1',
     },
     Card: {
-      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      borderRadius: 12,
+      headerBg: '#f8fafc',
+    },
+    Button: {
+      borderRadius: 8,
+      fontWeight: 500,
+    },
+    Input: {
+      borderRadius: 8,
+    },
+    Select: {
+      borderRadius: 8,
+    },
+    Table: {
+      borderRadius: 12,
+      headerBg: '#f8fafc',
+    },
+    Tag: {
+      borderRadius: 6,
     },
   },
 };

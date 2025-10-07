@@ -22,35 +22,45 @@ const { Text } = Typography;
 // Styled components
 const StyledLayout = styled(AntLayout)`
   min-height: 100vh;
+  background: #f8fafc;
 `;
 
 const StyledHeader = styled(Header)`
-  background: #fff;
-  padding: 0 24px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  padding: 0 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   z-index: 1;
-  min-height: 64px;
+  min-height: 72px;
+  border-bottom: 1px solid #e2e8f0;
 `;
 
 const StyledSider = styled(Sider)`
-  background: #fff;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.06);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow: 4px 0 6px -1px rgba(0, 0, 0, 0.1), 2px 0 4px -1px rgba(0, 0, 0, 0.06);
+  border-right: 1px solid #e2e8f0;
 `;
 
 const StyledContent = styled(Content)`
-  padding: 24px;
-  background: #f0f2f5;
+  padding: 32px;
+  background: #f8fafc;
   overflow-y: auto;
+  min-height: calc(100vh - 72px);
 `;
 
 const Logo = styled.div`
-  font-size: 20px;
-  font-weight: bold;
-  color: #1890ff;
-  margin-right: 24px;
+  font-size: 24px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-right: 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 `;
 
 const HeaderActions = styled.div`
@@ -67,26 +77,31 @@ const UndoRedoGroup = styled.div`
 const UserInfo = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 4px 12px 4px 8px;
-  border-radius: 20px;
-  background: #f5f5f5;
+  gap: 12px;
+  padding: 8px 16px 8px 12px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.3s ease;
   min-width: 0;
-  max-width: 220px;
+  max-width: 240px;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  height: 36px;
+  height: 44px;
   box-sizing: border-box;
+  border: 1px solid #e2e8f0;
 
   &:hover {
-    background: #e6f7ff;
+    background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+    border-color: #6366f1;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
   }
 
   .ant-avatar {
     flex-shrink: 0;
+    border: 2px solid #ffffff;
   }
 
   .ant-typography {

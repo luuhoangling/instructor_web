@@ -28,6 +28,58 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { getCourse } from '../services/api';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import CourseTreeView from '../components/TreeView/CourseTreeView';
+import styled from 'styled-components';
+
+// Styled components
+const PageContainer = styled.div`
+  background: #f8fafc;
+  min-height: 100vh;
+  padding: 32px;
+`;
+
+const HeaderSection = styled.div`
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  padding: 32px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 32px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+`;
+
+const ContentSection = styled.div`
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 32px;
+  
+  @media (max-width: 1200px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const MainContent = styled.div`
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+`;
+
+const Sidebar = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+`;
+
+const InfoCard = styled(Card)`
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  
+  .ant-card-head {
+    background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+    border-bottom: 1px solid #e2e8f0;
+  }
+`;
 import SectionForm from '../components/Forms/SectionForm';
 import LessonForm from '../components/Forms/LessonForm';
 import QuizForm from '../components/Forms/QuizForm';
@@ -64,12 +116,8 @@ const CourseDetail = () => {
 
   // Handle node selection in tree
   const handleNodeSelect = (selectedKeys, { node }) => {
+    // Chỉ set selected node, không auto mở video
     setSelectedNode(node);
-    // Nếu là bài học và có content_url thì mở video
-    const videoUrl = node.data?.content_url;
-    if (node.type === 'lesson' && videoUrl) {
-      window.open(videoUrl, '_blank');
-    }
   };
 
   // Handle add new item
@@ -96,12 +144,12 @@ const CourseDetail = () => {
     loadCourseData();
   };
 
-  // Get status tag
+  // Get status tag - chỉ hiển thị nếu đã xuất bản
   const getStatusTag = (course) => {
     if (course?.is_published) {
       return <Tag color="green">Đã xuất bản</Tag>;
     }
-    return <Tag color="orange">Bản nháp</Tag>;
+    return null; // Không hiển thị gì nếu chưa xuất bản
   };
 
   // Get level tag
@@ -185,23 +233,27 @@ const CourseDetail = () => {
   }
 
   return (
-    <Layout.Content style={{ padding: '24px' }}>
+    <PageContainer>
       {/* Header */}
-      <div style={{ marginBottom: 24 }}>
+      <HeaderSection>
         <Button 
           icon={<ArrowLeftOutlined />} 
           onClick={() => navigate('/courses')}
-          style={{ marginBottom: 16 }}
+          style={{ 
+            marginBottom: 24,
+            borderRadius: '8px',
+            height: '40px'
+          }}
         >
           Quay lại danh sách
         </Button>
         
         <Row justify="space-between" align="middle">
           <Col>
-            <Title level={2} style={{ margin: 0 }}>
+            <Title level={2} style={{ margin: 0, color: '#1f2937' }}>
               {course.title}
             </Title>
-            <Space style={{ marginTop: 8 }}>
+            <Space style={{ marginTop: 12 }}>
               {getStatusTag(course)}
               {getLevelTag(course.level)}
               {course.is_featured && <Tag color="gold">Nổi bật</Tag>}
@@ -213,6 +265,13 @@ const CourseDetail = () => {
                 type="primary" 
                 icon={<EditOutlined />}
                 onClick={() => navigate(`/courses/${id}/edit`)}
+                style={{
+                  borderRadius: '8px',
+                  height: '40px',
+                  background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                  border: 'none',
+                  boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)'
+                }}
               >
                 Chỉnh sửa
               </Button>
@@ -226,12 +285,21 @@ const CourseDetail = () => {
             </Space>
           </Col>
         </Row>
-      </div>
+      </HeaderSection>
 
-      <Row gutter={24}>
-        {/* Course Information */}
-        <Col span={8}>
-          <Card title="Thông tin khóa học" style={{ marginBottom: 24 }}>
+      <ContentSection>
+        {/* Main Content */}
+        <MainContent>
+          <CourseTreeView 
+            course={course} 
+            onNodeSelect={handleNodeSelect}
+            selectedNode={selectedNode}
+          />
+        </MainContent>
+
+        {/* Sidebar */}
+        <Sidebar>
+          <InfoCard title="Thông tin khóa học">
             {course.thumbnail_url && (
               <div style={{ marginBottom: 16, textAlign: 'center' }}>
                 <img 
@@ -241,7 +309,7 @@ const CourseDetail = () => {
                     width: '100%', 
                     maxHeight: 200, 
                     objectFit: 'cover',
-                    borderRadius: 8 
+                    borderRadius: 12 
                   }}
                 />
               </div>
@@ -256,7 +324,7 @@ const CourseDetail = () => {
               </Descriptions.Item>
               {course.discount_price && (
                 <Descriptions.Item label="Giá ưu đãi">
-                  <Text style={{ color: '#f5222d', fontWeight: 'bold' }}>
+                  <Text style={{ color: '#ef4444', fontWeight: 'bold' }}>
                     {formatCurrency(course.discount_price)}
                   </Text>
                 </Descriptions.Item>
@@ -296,52 +364,9 @@ const CourseDetail = () => {
                 </div>
               </>
             )}
-          </Card>
-        </Col>
-
-        {/* Course Tree */}
-        <Col span={16}>
-          <Card 
-            title="Nội dung khóa học"
-            extra={
-              <Space>
-                <Text type="secondary">
-                  Chọn một mục để xem chi tiết và thao tác
-                </Text>
-              </Space>
-            }
-          >
-            <CourseTreeView
-              course={course}
-              onSelect={handleNodeSelect}
-              onEdit={handleEdit}
-              onAddSection={() => handleAddNew('section')}
-              onAddLesson={(sectionNode) => handleAddNew('lesson', sectionNode)}
-              onAddQuiz={(lessonNode) => handleAddNew('quiz', lessonNode)}
-              selectedKeys={selectedNode ? [selectedNode.key] : []}
-            />
-            
-            {!course.sections || course.sections.length === 0 && (
-              <div style={{ 
-                textAlign: 'center', 
-                padding: '40px 20px',
-                color: '#999'
-              }}>
-                <FileTextOutlined style={{ fontSize: 48, marginBottom: 16 }} />
-                <div>Chưa có nội dung nào</div>
-                <Button 
-                  type="primary" 
-                  icon={<PlusOutlined />}
-                  style={{ marginTop: 16 }}
-                  onClick={() => handleAddNew('section')}
-                >
-                  Tạo chương đầu tiên
-                </Button>
-              </div>
-            )}
-          </Card>
-        </Col>
-      </Row>
+          </InfoCard>
+        </Sidebar>
+      </ContentSection>
 
       {/* Modal for forms */}
       <Modal
@@ -362,7 +387,7 @@ const CourseDetail = () => {
       >
         {renderModalContent()}
       </Modal>
-    </Layout.Content>
+    </PageContainer>
   );
 };
 

@@ -128,9 +128,12 @@ export const getCourse = async (id) => {
  * @param {number} data.category_id - ID danh mục
  * @returns {Promise} API response với course mới được tạo
  */
-export const createCourse = async (data) => {
+export const createCourse = async (data, isFormData = false) => {
   try {
-    const response = await apiClient.post('/courses', data);
+    const config = isFormData
+      ? { headers: { 'Content-Type': 'multipart/form-data' } }
+      : undefined;
+    const response = await apiClient.post('/courses', data, config);
     return response.data.data || response.data;
   } catch (error) {
     console.error('Failed to create course:', error);

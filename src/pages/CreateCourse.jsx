@@ -97,23 +97,30 @@ const CreateCourse = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState({});
   const [fileList, setFileList] = useState([]);
+  const [videoList, setVideoList] = useState([]);
+  const [demoVideoList, setDemoVideoList] = useState([]);
 
   // Form steps configuration
   const steps = [
     {
       title: 'Thông tin cơ bản',
       description: 'Tên, mô tả và thông tin chung',
-      fields: ['title', 'subtitle', 'description', 'category_id']
+      fields: ['title', 'subtitle', 'description', 'level']
     },
     {
-      title: 'Giá cả & Cấp độ',
-      description: 'Thiết lập giá và độ khó',
-      fields: ['price', 'discount_price', 'level']
+      title: 'Danh mục & Giá cả',
+      description: 'Chọn danh mục và thiết lập giá',
+      fields: ['category_id', 'price', 'discount_price']
     },
     {
-      title: 'Media & Xuất bản',
-      description: 'Hình ảnh, video và trạng thái',
-      fields: ['thumbnail_url', 'preview_video_url', 'is_published', 'is_featured']
+      title: 'Nội dung học',
+      description: 'Thời lượng, yêu cầu và nội dung học',
+      fields: ['total_duration', 'requirements', 'what_you_learn']
+    },
+    {
+      title: 'Media & Trạng thái',
+      description: 'Upload media và thiết lập trạng thái',
+      fields: ['thumbnail_url', 'preview_video_url', 'demo_video_url', 'is_published', 'is_featured']
     },
     {
       title: 'Xác nhận',
@@ -124,18 +131,23 @@ const CreateCourse = () => {
 
   // Level options
   const levelOptions = [
-    { value: 'Beginner', label: 'Người mới bắt đầu' },
-    { value: 'Intermediate', label: 'Trung cấp' },
-    { value: 'Advanced', label: 'Nâng cao' }
+    { value: 'beginner', label: 'Beginner' },
+    { value: 'intermediate', label: 'Intermediate' },
+    { value: 'all_levels', label: 'All Levels' },
+    { value: 'advanced', label: 'Advanced' }
   ];
 
-  // Category options (mock data)
+  // Category options
   const categoryOptions = [
-    { value: 1, label: 'Lập trình' },
-    { value: 2, label: 'Thiết kế' },
+    { value: 1, label: 'Develop' },
+    { value: 2, label: 'Design' },
     { value: 3, label: 'Marketing' },
-    { value: 4, label: 'Kinh doanh' },
-    { value: 5, label: 'Ngoại ngữ' }
+    { value: 4, label: 'Develop' },
+    { value: 5, label: 'Business' },
+    { value: 6, label: 'Language' },
+    { value: 7, label: 'Photo' },
+    { value: 8, label: 'Music' },
+    { value: 9, label: 'Personal' }
   ];
 
   // Form validation rules
@@ -145,12 +157,12 @@ const CreateCourse = () => {
       { min: 5, message: 'Tên khóa học phải có ít nhất 5 ký tự!' },
       { max: 100, message: 'Tên khóa học không được quá 100 ký tự!' }
     ],
-    subtitle: [
-      { max: 200, message: 'Phụ đề không được quá 200 ký tự!' }
-    ],
     description: [
       { required: true, message: 'Vui lòng nhập mô tả khóa học!' },
       { min: 20, message: 'Mô tả phải có ít nhất 20 ký tự!' }
+    ],
+    subtitle: [
+      { max: 200, message: 'Phụ đề không được quá 200 ký tự!' }
     ],
     price: [
       { type: 'number', min: 0, message: 'Giá phải lớn hơn hoặc bằng 0!' }
@@ -158,11 +170,8 @@ const CreateCourse = () => {
     discount_price: [
       { type: 'number', min: 0, message: 'Giá giảm phải lớn hơn hoặc bằng 0!' }
     ],
-    category_id: [
-      { required: true, message: 'Vui lòng chọn danh mục!' }
-    ],
-    level: [
-      { required: true, message: 'Vui lòng chọn cấp độ!' }
+    total_duration: [
+      { type: 'number', min: 0, message: 'Thời lượng phải lớn hơn hoặc bằng 0!' }
     ]
   };
 
@@ -190,11 +199,19 @@ const CreateCourse = () => {
   };
 
   // File upload handlers
-  const handleUploadChange = ({ fileList: newFileList }) => {
+  const handleThumbnailChange = ({ fileList: newFileList }) => {
     setFileList(newFileList);
   };
 
-  const uploadProps = {
+  const handleVideoChange = ({ fileList: newVideoList }) => {
+    setVideoList(newVideoList);
+  };
+
+  const handleDemoVideoChange = ({ fileList: newDemoVideoList }) => {
+    setDemoVideoList(newDemoVideoList);
+  };
+
+  const thumbnailUploadProps = {
     name: 'file',
     multiple: false,
     accept: 'image/*',
@@ -211,8 +228,50 @@ const CreateCourse = () => {
       }
       return false; // Prevent auto upload
     },
-    onChange: handleUploadChange,
+    onChange: handleThumbnailChange,
     fileList
+  };
+
+  const videoUploadProps = {
+    name: 'file',
+    multiple: false,
+    accept: 'video/*',
+    beforeUpload: (file) => {
+      const isVideo = file.type.startsWith('video/');
+      if (!isVideo) {
+        message.error('Chỉ được upload file video!');
+        return false;
+      }
+      const isLt100M = file.size / 1024 / 1024 < 100;
+      if (!isLt100M) {
+        message.error('Kích thước file phải nhỏ hơn 100MB!');
+        return false;
+      }
+      return false; // Prevent auto upload
+    },
+    onChange: handleVideoChange,
+    fileList: videoList
+  };
+
+  const demoVideoUploadProps = {
+    name: 'file',
+    multiple: false,
+    accept: 'video/*',
+    beforeUpload: (file) => {
+      const isVideo = file.type.startsWith('video/');
+      if (!isVideo) {
+        message.error('Chỉ được upload file video!');
+        return false;
+      }
+      const isLt100M = file.size / 1024 / 1024 < 100;
+      if (!isLt100M) {
+        message.error('Kích thước file phải nhỏ hơn 100MB!');
+        return false;
+      }
+      return false; // Prevent auto upload
+    },
+    onChange: handleDemoVideoChange,
+    fileList: demoVideoList
   };
 
   // Form submission
@@ -225,7 +284,7 @@ const CreateCourse = () => {
       const finalData = { ...formData, ...values };
 
       // Đảm bảo các trường boolean có giá trị mặc định
-      finalData.is_published = finalData.is_published || false;
+      finalData.is_published = true; // Luôn xuất bản khi tạo khóa học
       finalData.is_featured = finalData.is_featured || false;
       
       // Đảm bảo các trường số có giá trị hợp lệ
@@ -236,15 +295,110 @@ const CreateCourse = () => {
         finalData.discount_price = 0;
       }
 
-      // TODO: Handle file upload to server here
-      if (fileList.length > 0) {
-        // Upload thumbnail and get URL
-        // finalData.thumbnail_url = uploadedUrl;
-        console.log('Files to upload:', fileList);
+      // Prepare FormData if files are present
+      let courseData = finalData;
+      let isFormData = false;
+
+      if (fileList.length > 0 && fileList[0].originFileObj || videoList.length > 0 && videoList[0].originFileObj || demoVideoList.length > 0 && demoVideoList[0].originFileObj) {
+        isFormData = true;
+        const formData = new FormData();
+        
+        // Append all form fields
+        Object.entries(finalData).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== '') {
+            if (typeof value === 'boolean') {
+              formData.append(key, value.toString());
+            } else if (typeof value === 'number') {
+              formData.append(key, value.toString());
+            } else if (key === 'requirements' || key === 'what_you_learn') {
+              // Handle requirements and what_you_learn as string with newlines
+              if (typeof value === 'string') {
+                formData.append(key, value);
+              } else if (Array.isArray(value)) {
+                formData.append(key, value.join('\n'));
+              }
+            } else {
+              formData.append(key, value);
+            }
+          }
+        });
+
+        // Append files with correct field names for Supabase
+        if (fileList.length > 0 && fileList[0].originFileObj) {
+          console.log('DEBUG: Appending thumbnail file:', fileList[0].originFileObj.name);
+          formData.append('thumbnail', fileList[0].originFileObj);
+        }
+        if (videoList.length > 0 && videoList[0].originFileObj) {
+          console.log('DEBUG: Appending preview video file:', videoList[0].originFileObj.name);
+          formData.append('preview_video', videoList[0].originFileObj);
+        }
+        if (demoVideoList.length > 0 && demoVideoList[0].originFileObj) {
+          console.log('DEBUG: Appending demo video file:', demoVideoList[0].originFileObj.name);
+          formData.append('demo_video', demoVideoList[0].originFileObj);
+        }
+
+        // Debug: Log all FormData entries
+        console.log('DEBUG: FormData contents:');
+        for (let [key, value] of formData.entries()) {
+          if (value instanceof File) {
+            console.log(`${key}: [File] ${value.name} (${value.size} bytes)`);
+          } else {
+            console.log(`${key}:`, value);
+          }
+        }
+        
+        // Debug: Show example format
+        console.log('DEBUG: Example FormData format:');
+        console.log('const formData = new FormData();');
+        console.log('');
+        console.log('// Basic info');
+        Object.entries(finalData).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== '' && 
+              !['requirements', 'what_you_learn'].includes(key)) {
+            if (typeof value === 'string') {
+              console.log(`formData.append('${key}', '${value}');`);
+            } else if (typeof value === 'number') {
+              console.log(`formData.append('${key}', '${value}');`);
+            } else if (typeof value === 'boolean') {
+              console.log(`formData.append('${key}', '${value}');`);
+            }
+          }
+        });
+        
+        // Handle requirements and what_you_learn separately
+        if (finalData.requirements) {
+          console.log(`formData.append('requirements', '${finalData.requirements}');`);
+        }
+        if (finalData.what_you_learn) {
+          console.log(`formData.append('what_you_learn', '${finalData.what_you_learn}');`);
+        }
+        
+        console.log('');
+        console.log('// Files');
+        if (fileList.length > 0 && fileList[0].originFileObj) {
+          console.log(`formData.append('thumbnail', imageFile); // File object`);
+        }
+        if (videoList.length > 0 && videoList[0].originFileObj) {
+          console.log(`formData.append('preview_video', videoFile); // File object`);
+        }
+        if (demoVideoList.length > 0 && demoVideoList[0].originFileObj) {
+          console.log(`formData.append('demo_video', demoVideoFile); // File object`);
+        }
+        
+        console.log('');
+        console.log('// Arrays as JSON strings hoặc separate values');
+        if (finalData.requirements) {
+          console.log(`formData.append('requirements', '${finalData.requirements}');`);
+        }
+        if (finalData.what_you_learn) {
+          console.log(`formData.append('what_you_learn', '${finalData.what_you_learn}');`);
+        }
+
+        courseData = formData;
       }
 
       // Create course
-      const result = await createCourse(finalData);
+      const result = await createCourse(courseData, isFormData);
       
       addNotification({
         type: 'success',
@@ -316,7 +470,6 @@ const CreateCourse = () => {
               <Form.Item
                 name="category_id"
                 label="Danh mục"
-                rules={validationRules.category_id}
               >
                 <Select 
                   placeholder="Chọn danh mục khóa học"
@@ -330,49 +483,11 @@ const CreateCourse = () => {
                 </Select>
               </Form.Item>
             </Col>
-          </Row>
-        );
-
-      case 1:
-        return (
-          <Row gutter={[24, 24]}>
-            <Col xs={24} md={12}>
-              <Form.Item
-                name="price"
-                label="Giá khóa học (USD)"
-                rules={validationRules.price}
-              >
-                <InputNumber
-                  placeholder="299"
-                  formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={value => value.replace(/\$\s?|(,*)/g, '')}
-                  style={{ width: '100%' }}
-                  size="large"
-                />
-              </Form.Item>
-            </Col>
-            
-            <Col xs={24} md={12}>
-              <Form.Item
-                name="discount_price"
-                label="Giá khuyến mãi (USD)"
-                rules={validationRules.discount_price}
-              >
-                <InputNumber
-                  placeholder="199"
-                  formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={value => value.replace(/\$\s?|(,*)/g, '')}
-                  style={{ width: '100%' }}
-                  size="large"
-                />
-              </Form.Item>
-            </Col>
             
             <Col span={24}>
               <Form.Item
                 name="level"
                 label="Cấp độ"
-                rules={validationRules.level}
               >
                 <Select 
                   placeholder="Chọn cấp độ khóa học"
@@ -389,7 +504,105 @@ const CreateCourse = () => {
           </Row>
         );
 
+      case 1:
+        return (
+          <Row gutter={[24, 24]}>
+            <Col span={24}>
+              <Form.Item
+                name="category_id"
+                label="Danh mục"
+              >
+                <Select 
+                  placeholder="Chọn danh mục khóa học"
+                  size="large"
+                >
+                  {categoryOptions.map(option => (
+                    <Option key={option.value} value={option.value}>
+                      {option.label}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            
+            <Col xs={24} md={12}>
+              <Form.Item
+                name="price"
+                label="Giá khóa học (VND)"
+                rules={validationRules.price}
+              >
+                <InputNumber
+                  placeholder="299000"
+                  formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                  style={{ width: '100%' }}
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
+            
+            <Col xs={24} md={12}>
+              <Form.Item
+                name="discount_price"
+                label="Giá khuyến mãi (VND)"
+                rules={validationRules.discount_price}
+              >
+                <InputNumber
+                  placeholder="199000"
+                  formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                  style={{ width: '100%' }}
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+        );
+
       case 2:
+        return (
+          <Row gutter={[24, 24]}>
+            <Col span={24}>
+              <Form.Item
+                name="total_duration"
+                label="Tổng thời lượng (phút)"
+                rules={validationRules.total_duration}
+              >
+                <InputNumber
+                  placeholder="120"
+                  style={{ width: '100%' }}
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
+            
+            <Col span={24}>
+              <Form.Item
+                name="requirements"
+                label="Yêu cầu trước khi học"
+              >
+                <TextArea 
+                  rows={4}
+                  placeholder="Ví dụ: Kiến thức cơ bản về lập trình, Máy tính có kết nối internet..."
+                />
+              </Form.Item>
+            </Col>
+            
+            <Col span={24}>
+              <Form.Item
+                name="what_you_learn"
+                label="Bạn sẽ học được gì"
+              >
+                <TextArea 
+                  rows={4}
+                  placeholder="Ví dụ: Tạo ứng dụng Android cơ bản, Sử dụng Android Studio, Thiết kế giao diện người dùng..."
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+        );
+
+      case 3:
         return (
           <Row gutter={[24, 24]}>
             <Col span={24}>
@@ -397,7 +610,7 @@ const CreateCourse = () => {
                 name="thumbnail_url"
                 label="Hình đại diện"
               >
-                <Upload {...uploadProps}>
+                <Upload {...thumbnailUploadProps}>
                   <Button icon={<UploadOutlined />}>Tải lên hình ảnh</Button>
                 </Upload>
                 <div style={{ marginTop: 8, color: '#666', fontSize: '12px' }}>
@@ -411,10 +624,26 @@ const CreateCourse = () => {
                 name="preview_video_url"
                 label="Video giới thiệu"
               >
-                <Input 
-                  placeholder="https://youtube.com/watch?v=..."
-                  size="large"
-                />
+                <Upload {...videoUploadProps}>
+                  <Button icon={<UploadOutlined />}>Tải lên video giới thiệu</Button>
+                </Upload>
+                <div style={{ marginTop: 8, color: '#666', fontSize: '12px' }}>
+                  Định dạng MP4/WebM, tối đa 100MB
+                </div>
+              </Form.Item>
+            </Col>
+            
+            <Col span={24}>
+              <Form.Item
+                name="demo_video_url"
+                label="Video demo"
+              >
+                <Upload {...demoVideoUploadProps}>
+                  <Button icon={<UploadOutlined />}>Tải lên video demo</Button>
+                </Upload>
+                <div style={{ marginTop: 8, color: '#666', fontSize: '12px' }}>
+                  Định dạng MP4/WebM, tối đa 100MB
+                </div>
               </Form.Item>
             </Col>
             
@@ -440,14 +669,14 @@ const CreateCourse = () => {
           </Row>
         );
 
-      case 3:
+      case 4:
         return (
           <PreviewCard title="Xem lại thông tin khóa học">
             <div className="course-preview-header">
               <div className="course-thumbnail">
                 {fileList.length > 0 ? (
                   <img 
-                    src={URL.createObjectURL(fileList[0].originFileObj)} 
+                     src={fileList[0].originFileObj ? URL.createObjectURL(fileList[0].originFileObj) : fileList[0].url} 
                     alt="thumbnail"
                     style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }}
                   />
@@ -468,10 +697,10 @@ const CreateCourse = () => {
                 <div>
                   <strong>Giá:</strong> {
                     (formData.price || form.getFieldValue('price'))?.toLocaleString() || '0'
-                  } USD
+                  } VND
                   {(formData.discount_price || form.getFieldValue('discount_price')) && (
                     <span style={{ color: '#f50', marginLeft: 8 }}>
-                      → {(formData.discount_price || form.getFieldValue('discount_price')).toLocaleString()} USD
+                      → {(formData.discount_price || form.getFieldValue('discount_price')).toLocaleString()} VND
                     </span>
                   )}
                 </div>
@@ -524,11 +753,14 @@ const CreateCourse = () => {
           form={form}
           layout="vertical"
           initialValues={{
-            is_published: false,
             is_featured: false,
+            is_published: false,
             price: 0,
             discount_price: 0,
-            level: 'Beginner'
+            level: 'beginner',
+            total_duration: 0,
+            requirements: '',
+            what_you_learn: ''
           }}
         >
           {renderStepContent()}
