@@ -85,59 +85,39 @@ const LessonForm = ({ courseId, sectionId, lesson, onSuccess, onCancel }) => {
 
   const handleSubmit = async (values) => {
     // Đảm bảo duration luôn là số >= 0
-    if (contentType === 'video') {
-      values.duration = values.duration !== undefined && values.duration !== null ? Number(values.duration) : 0;
-    }
+    values.duration = values.duration !== undefined && values.duration !== null ? Number(values.duration) : 0;
     setLoading(true);
     try {
       let response;
-      // Xử lý cho bài học video
-      if (contentType === 'video') {
-        const fileObj = fileList[0]?.originFileObj || fileList[0];
-        // Nếu có file mới (instance của File), upload file
-        if (fileObj instanceof File) {
-          const formData = new FormData();
-          formData.append('title', values.title);
-          formData.append('description', values.description || '');
-          formData.append('content_type', values.content_type);
-          formData.append('order_index', values.order_index);
-          formData.append('duration', values.duration ?? 0);
-          // Xử lý đặc biệt cho các trường boolean
-          formData.append('is_free', values.is_free !== undefined ? values.is_free.toString() : 'false');
-          formData.append('can_preview', values.can_preview !== undefined ? values.can_preview.toString() : 'false');
-          formData.append('section_id', sectionId);
-          formData.append('course_id', courseId);
-          formData.append('video', fileObj);
-          if (isEditing) {
-            response = await updateLesson(lesson.id, formData, true);
-            message.success('Cập nhật bài học thành công');
-          } else {
-            response = await createLesson(sectionId, formData, true);
-            message.success('Tạo bài học thành công');
-          }
+      // Chỉ xử lý video
+      const fileObj = fileList[0]?.originFileObj || fileList[0];
+      // Nếu có file mới (instance của File), upload file
+      if (fileObj instanceof File) {
+        const formData = new FormData();
+        formData.append('title', values.title);
+        formData.append('description', values.description || '');
+        formData.append('content_type', 'video');
+        formData.append('order_index', values.order_index);
+        formData.append('duration', values.duration ?? 0);
+        // Xử lý đặc biệt cho các trường boolean
+        formData.append('is_free', values.is_free !== undefined ? values.is_free.toString() : 'false');
+        formData.append('can_preview', values.can_preview !== undefined ? values.can_preview.toString() : 'false');
+        formData.append('section_id', sectionId);
+        formData.append('course_id', courseId);
+        formData.append('video', fileObj);
+        if (isEditing) {
+          response = await updateLesson(lesson.id, formData, true);
+          message.success('Cập nhật bài học thành công');
         } else {
-          // Không có file mới, chỉ gửi content_url cũ (nếu có)
-          const lessonData = {
-            ...values,
-            content_url: fileList[0]?.url || fileList[0]?.response?.url || lesson?.content_url,
-            section_id: sectionId,
-            course_id: courseId,
-            // Đảm bảo các trường boolean có giá trị hợp lệ
-            is_free: values.is_free !== undefined ? values.is_free : false,
-            can_preview: values.can_preview !== undefined ? values.can_preview : false
-          };
-          if (isEditing) {
-            await updateLesson(lesson.id, lessonData);
-            message.success('Cập nhật bài học thành công');
-          } else {
-            await createLesson(sectionId, lessonData);
-            message.success('Tạo bài học thành công');
-          }
+          response = await createLesson(sectionId, formData, true);
+          message.success('Tạo bài học thành công');
         }
       } else {
+        // Không có file mới, chỉ gửi content_url cũ (nếu có)
         const lessonData = {
           ...values,
-          content_url: fileList[0]?.url || fileList[0]?.response?.url,
+          content_type: 'video',
+          content_url: fileList[0]?.url || fileList[0]?.response?.url || lesson?.content_url,
           section_id: sectionId,
           course_id: courseId,
           // Đảm bảo các trường boolean có giá trị hợp lệ
@@ -201,66 +181,24 @@ const LessonForm = ({ courseId, sectionId, lesson, onSuccess, onCancel }) => {
   };
 
   const renderContentFields = () => {
-    switch (contentType) {
-      case 'video':
-        return (
-          <Form.Item
-            label="Video bài học"
-            extra="Định dạng MP4/WebM, tối đa 500MB"
-          >
-            <Upload
-              {...uploadProps}
-              fileList={fileList}
-              onChange={handleFileChange}
-              accept="video/*"
-              maxCount={1}
-            >
-              <Button icon={<PlayCircleOutlined />}>
-                Tải video bài học
-              </Button>
-            </Upload>
-          </Form.Item>
-        );
-      
-      case 'text':
-        return (
-          <Form.Item
-            name="content_text"
-            label="Nội dung bài học"
-            rules={[
-              { required: true, message: 'Vui lòng nhập nội dung bài học' }
-            ]}
-          >
-            <TextArea 
-              rows={10}
-              placeholder="Nhập nội dung bài học dạng text..."
-            />
-          </Form.Item>
-        );
-      
-      case 'file':
-        return (
-          <Form.Item
-            label="File tài liệu"
-            extra="Định dạng PDF/DOC/PPT, tối đa 50MB"
-          >
-            <Upload
-              {...uploadProps}
-              fileList={fileList}
-              onChange={handleFileChange}
-              accept=".pdf,.doc,.docx,.ppt,.pptx"
-              maxCount={1}
-            >
-              <Button icon={<UploadOutlined />}>
-                Tải file tài liệu
-              </Button>
-            </Upload>
-          </Form.Item>
-        );
-      
-      default:
-        return null;
-    }
+    return (
+      <Form.Item
+        label="Video bài học"
+        extra="Định dạng MP4/WebM, tối đa 500MB"
+      >
+        <Upload
+          {...uploadProps}
+          fileList={fileList}
+          onChange={handleFileChange}
+          accept="video/*"
+          maxCount={1}
+        >
+          <Button icon={<PlayCircleOutlined />}>
+            Tải video bài học
+          </Button>
+        </Upload>
+      </Form.Item>
+    );
   };
 
   // Xử lý thêm/sửa checkpoint
@@ -371,24 +309,10 @@ const LessonForm = ({ courseId, sectionId, lesson, onSuccess, onCancel }) => {
           <Form.Item
             name="content_type"
             label="Loại nội dung"
-            rules={[
-              { required: true, message: 'Vui lòng chọn loại nội dung' }
-            ]}
+            initialValue="video"
+            hidden
           >
-            <Select 
-              onChange={setContentType}
-              placeholder="Chọn loại nội dung"
-            >
-              <Option value="video">
-                <PlayCircleOutlined /> Video
-              </Option>
-              <Option value="text">
-                <FileTextOutlined /> Text
-              </Option>
-              <Option value="file">
-                <UploadOutlined /> File tài liệu
-              </Option>
-            </Select>
+            <Input value="video" />
           </Form.Item>
 
           <Form.Item
